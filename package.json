@@ -14,7 +14,7 @@
     "lint-fix": " eslint --ext js,mjs,cjs,ts,mts,cts ./src/ --fix",
     "prepublishOnly": "gulp test",
     "functional": "mocha src/test/functional/functional-tests.mjs",
-    "browserify": "browserify ./dist/cjs/minio.js --outfile ./dist/browser/minio.js -s Minio",
+    "browserify": "browserify ./dist/cjs/minio.cjs --outfile ./dist/browser/minio.js -s Minio",
     "lint-staged": "lint-staged",
     "prepare": "husky install"
   },

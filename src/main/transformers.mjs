@@ -16,7 +16,7 @@
 
 import Crypto from 'crypto'
 import JSONParser from 'json-stream'
-import * as _ from 'lodash'
+import _ from 'lodash'
 import Through2 from 'through2'
 
 import * as errors from './errors'

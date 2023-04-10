@@ -85,11 +85,16 @@ const Package = { version }
 
 export class Client {
   constructor(params) {
-    if (typeof params.secure !== 'undefined')
+    if (typeof params.secure !== 'undefined') {
       throw new Error('"secure" option deprecated, "useSSL" should be used instead')
+    }
     // Default values if not specified.
-    if (typeof params.useSSL === 'undefined') params.useSSL = true
-    if (!params.port) params.port = 0
+    if (typeof params.useSSL === 'undefined') {
+      params.useSSL = true
+    }
+    if (!params.port) {
+      params.port = 0
+    }
     // Validate input params.
     if (!isValidEndpoint(params.endPoint)) {
       throw new errors.InvalidEndpointError(`Invalid endPoint : ${params.endPoint}`)
@@ -166,8 +171,12 @@ export class Client {
       this.pathStyle = params.pathStyle
     }
 
-    if (!this.accessKey) this.accessKey = ''
-    if (!this.secretKey) this.secretKey = ''
+    if (!this.accessKey) {
+      this.accessKey = ''
+    }
+    if (!this.secretKey) {
+      this.secretKey = ''
+    }
     this.anonymous = !this.accessKey || !this.secretKey
 
     if (params.credentialsProvider) {
@@ -289,7 +298,9 @@ export class Client {
       virtualHostStyle = isVirtualHostStyle(this.host, this.protocol, bucketName, this.pathStyle)
     }
 
-    if (this.port) reqOptions.port = this.port
+    if (this.port) {
+      reqOptions.port = this.port
+    }
     reqOptions.protocol = this.protocol
 
     if (objectName) {
@@ -316,17 +327,27 @@ export class Client {
       //
       //  var host = 'bucketName.example.com'
       //
-      if (bucketName) reqOptions.host = `${bucketName}.${reqOptions.host}`
-      if (objectName) reqOptions.path = `/${objectName}`
+      if (bucketName) {
+        reqOptions.host = `${bucketName}.${reqOptions.host}`
+      }
+      if (objectName) {
+        reqOptions.path = `/${objectName}`
+      }
     } else {
       // For all S3 compatible storage services we will fallback to
       // path style requests, where `bucketName` is part of the URI
       // path.
-      if (bucketName) reqOptions.path = `/${bucketName}`
-      if (objectName) reqOptions.path = `/${bucketName}/${objectName}`
+      if (bucketName) {
+        reqOptions.path = `/${bucketName}`
+      }
+      if (objectName) {
+        reqOptions.path = `/${bucketName}/${objectName}`
+      }
     }
 
-    if (query) reqOptions.path += `?${query}`
+    if (query) {
+      reqOptions.path += `?${query}`
+    }
     reqOptions.headers.host = reqOptions.host
     if (
       (reqOptions.protocol === 'http:' && reqOptions.port !== 80) ||
@@ -389,7 +410,9 @@ export class Client {
   // log the request, response, error
   logHTTP(reqOptions, response, err) {
     // if no logstreamer available return.
-    if (!this.logStream) return
+    if (!this.logStream) {
+      return
+    }
     if (!isObject(reqOptions)) {
       throw new TypeError('reqOptions should be of type "object"')
     }
@@ -424,7 +447,9 @@ export class Client {
 
   // Enable tracing
   traceOn(stream) {
-    if (!stream) stream = process.stdout
+    if (!stream) {
+      stream = process.stdout
+    }
     this.logStream = stream
   }
 
@@ -464,12 +489,16 @@ export class Client {
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    if (!options.headers) options.headers = {}
+    if (!options.headers) {
+      options.headers = {}
+    }
     if (options.method === 'POST' || options.method === 'PUT' || options.method === 'DELETE') {
       options.headers['content-length'] = payload.length
     }
     var sha256sum = ''
-    if (this.enableSHA256) sha256sum = toSha256(payload)
+    if (this.enableSHA256) {
+      sha256sum = toSha256(payload)
+    }
     var stream = readableStream(payload)
     this.makeRequestStream(options, stream, sha256sum, statusCodes, region, returnResponse, cb)
   }
@@ -510,12 +539,16 @@ export class Client {
     }
 
     var _makeRequest = (e, region) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
       options.region = region
       var reqOptions = this.getRequestOptions(options)
       if (!this.anonymous) {
         // For non-anonymous https requests sha256sum is 'UNSIGNED-PAYLOAD' for signature calculation.
-        if (!this.enableSHA256) sha256sum = 'UNSIGNED-PAYLOAD'
+        if (!this.enableSHA256) {
+          sha256sum = 'UNSIGNED-PAYLOAD'
+        }
 
         let date = new Date()
 
@@ -544,7 +577,9 @@ export class Client {
           return
         }
         this.logHTTP(reqOptions, response)
-        if (returnResponse) return cb(null, response)
+        if (returnResponse) {
+          return cb(null, response)
+        }
         // We drain the socket so that the connection gets closed. Note that this
         // is not expensive as the socket will not have any data.
         response.on('data', () => {})
@@ -556,7 +591,9 @@ export class Client {
         cb(e)
       })
     }
-    if (region) return _makeRequest(null, region)
+    if (region) {
+      return _makeRequest(null, region)
+    }
     this.getBucketRegion(options.bucketName, _makeRequest)
   }
 
@@ -577,16 +614,22 @@ export class Client {
     }
 
     // Region is set with constructor, return the region right here.
-    if (this.region) return cb(null, this.region)
+    if (this.region) {
+      return cb(null, this.region)
+    }
 
-    if (this.regionMap[bucketName]) return cb(null, this.regionMap[bucketName])
+    if (this.regionMap[bucketName]) {
+      return cb(null, this.regionMap[bucketName])
+    }
     var extractRegion = (response) => {
       var transformer = transformers.getBucketRegionTransformer()
       var region = DEFAULT_REGION
       pipesetup(response, transformer)
         .on('error', cb)
         .on('data', (data) => {
-          if (data) region = data
+          if (data) {
+            region = data
+          }
         })
         .on('end', () => {
           this.regionMap[bucketName] = region
@@ -614,9 +657,13 @@ export class Client {
       if (e) {
         if (e.name === 'AuthorizationHeaderMalformed') {
           var region = e.Region
-          if (!region) return cb(e)
+          if (!region) {
+            return cb(e)
+          }
           this.makeRequest({ method, bucketName, query }, '', [200], region, true, (e, response) => {
-            if (e) return cb(e)
+            if (e) {
+              return cb(e)
+            }
             extractRegion(response)
           })
           return
@@ -699,7 +746,9 @@ export class Client {
       headers['x-amz-bucket-object-lock-enabled'] = true
     }
 
-    if (!region) region = DEFAULT_REGION
+    if (!region) {
+      region = DEFAULT_REGION
+    }
 
     const processWithRetry = (err) => {
       if (err && (region === '' || region === DEFAULT_REGION)) {
@@ -734,7 +783,9 @@ export class Client {
     }
     var method = 'GET'
     this.makeRequest({ method }, '', [200], DEFAULT_REGION, true, (e, response) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
       var transformer = transformers.getListBucketTransformer()
       var buckets
       pipesetup(response, transformer)
@@ -751,8 +802,12 @@ export class Client {
 
   //   * `object.size` _Integer_: size of the partially uploaded object
   listIncompleteUploads(bucket, prefix, recursive) {
-    if (prefix === undefined) prefix = ''
-    if (recursive === undefined) recursive = false
+    if (prefix === undefined) {
+      prefix = ''
+    }
+    if (recursive === undefined) {
+      recursive = false
+    }
     if (!isValidBucketName(bucket)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucket)
     }
@@ -773,7 +828,9 @@ export class Client {
       if (uploads.length) {
         return readStream.push(uploads.shift())
       }
-      if (ended) return readStream.push(null)
+      if (ended) {
+        return readStream.push(null)
+      }
       this.listIncompleteUploadsQuery(bucket, prefix, keyMarker, uploadIdMarker, delimiter)
         .on('error', (e) => readStream.emit('error', e))
         .on('data', (result) => {
@@ -783,7 +840,9 @@ export class Client {
             (upload, cb) => {
               // for each incomplete upload add the sizes of its uploaded parts
               this.listParts(bucket, upload.key, upload.uploadId, (err, parts) => {
-                if (err) return cb(err)
+                if (err) {
+                  return cb(err)
+                }
                 upload.size = parts.reduce((acc, item) => acc + item.size, 0)
                 uploads.push(upload)
                 cb()
@@ -824,7 +883,9 @@ export class Client {
     var method = 'HEAD'
     this.makeRequest({ method, bucketName }, '', [200], '', false, (err) => {
       if (err) {
-        if (err.code == 'NoSuchBucket' || err.code == 'NotFound') return cb(null, false)
+        if (err.code == 'NoSuchBucket' || err.code == 'NotFound') {
+          return cb(null, false)
+        }
         return cb(err)
       }
       cb(null, true)
@@ -848,7 +909,9 @@ export class Client {
     var method = 'DELETE'
     this.makeRequest({ method, bucketName }, '', [204], '', false, (e) => {
       // If the bucket was successfully removed, remove the region map entry.
-      if (!e) delete this.regionMap[bucketName]
+      if (!e) {
+        delete this.regionMap[bucketName]
+      }
       cb(e)
     })
   }
@@ -876,7 +939,9 @@ export class Client {
     async.during(
       (cb) => {
         this.findUploadId(bucketName, objectName, (e, uploadId) => {
-          if (e) return cb(e)
+          if (e) {
+            return cb(e)
+          }
           removeUploadId = uploadId
           cb(null, uploadId)
         })
@@ -926,7 +991,9 @@ export class Client {
 
     // Rename wrapper.
     var rename = (err) => {
-      if (err) return cb(err)
+      if (err) {
+        return cb(err)
+      }
       fs.rename(partFile, filePath, cb)
     }
 
@@ -945,7 +1012,9 @@ export class Client {
             if (e) {
               partFileStream = fs.createWriteStream(partFile, { flags: 'w' })
             } else {
-              if (objStat.size === stats.size) return rename()
+              if (objStat.size === stats.size) {
+                return rename()
+              }
               offset = stats.size
               partFileStream = fs.createWriteStream(partFile, { flags: 'a' })
             }
@@ -959,7 +1028,9 @@ export class Client {
         },
         (cb) => fs.stat(partFile, cb),
         (stats, cb) => {
-          if (stats.size === objStat.size) return cb()
+          if (stats.size === objStat.size) {
+            return cb()
+          }
           cb(new Error('Size mismatch between downloaded file and the object'))
         },
       ],
@@ -1131,7 +1202,9 @@ export class Client {
             var start = 0
             var end = size - 1
             var autoClose = true
-            if (size === 0) end = 0
+            if (size === 0) {
+              end = 0
+            }
             var options = { start, end, autoClose }
             pipesetup(fs.createReadStream(filePath, options), hash)
               .on('data', (data) => {
@@ -1150,7 +1223,9 @@ export class Client {
         },
         (uploadId, cb) => {
           // if there was a previous incomplete upload, fetch all its uploaded parts info
-          if (uploadId) return this.listParts(bucketName, objectName, uploadId, (e, etags) => cb(e, uploadId, etags))
+          if (uploadId) {
+            return this.listParts(bucketName, objectName, uploadId, (e, etags) => cb(e, uploadId, etags))
+          }
           // there was no previous upload, initiate a new one
           this.initiateNewMultipartUpload(bucketName, objectName, metaData, (e, uploadId) => cb(e, uploadId, []))
         },
@@ -1207,7 +1282,9 @@ export class Client {
                   // part is not uploaded yet, or md5 mismatch
                   var stream = fs.createReadStream(filePath, options)
                   uploader(uploadId, partNumber, stream, length, data.sha256sum, data.md5sum, (e, objInfo) => {
-                    if (e) return cb(e)
+                    if (e) {
+                      return cb(e)
+                    }
                     partsDone.push({ part: partNumber, etag: objInfo.etag })
                     partNumber++
                     uploadedSize += length
@@ -1217,7 +1294,9 @@ export class Client {
                 .on('error', (e) => cb(e))
             },
             (e) => {
-              if (e) return cb(e)
+              if (e) {
+                return cb(e)
+              }
               cb(null, partsDone, uploadId)
             }
           )
@@ -1226,7 +1305,9 @@ export class Client {
         (etags, uploadId, cb) => this.completeMultipartUpload(bucketName, objectName, uploadId, etags, cb),
       ],
       (err, ...rest) => {
-        if (err === true) return
+        if (err === true) {
+          return
+        }
         callback(err, ...rest)
       }
     )
@@ -1284,7 +1365,9 @@ export class Client {
 
     // Get the part size and forward that to the BlockStream. Default to the
     // largest block size possible if necessary.
-    if (!isNumber(size)) size = this.maxObjectSize
+    if (!isNumber(size)) {
+      size = this.maxObjectSize
+    }
 
     size = this.calculatePartSize(size)
 
@@ -1350,7 +1433,9 @@ export class Client {
 
     var method = 'PUT'
     this.makeRequest({ method, bucketName, objectName, headers }, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
       var transformer = transformers.getCopyObjectTransformer()
       pipesetup(response, transformer)
         .on('error', (e) => cb(e))
@@ -1389,7 +1474,9 @@ export class Client {
 
     const method = 'PUT'
     this.makeRequest({ method, bucketName, objectName, headers }, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
       const transformer = transformers.getCopyObjectTransformer()
       pipesetup(response, transformer)
         .on('error', (e) => cb(e))
@@ -1497,7 +1584,9 @@ export class Client {
     var method = 'GET'
     var transformer = transformers.getListObjectsTransformer()
     this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
-      if (e) return transformer.emit('error', e)
+      if (e) {
+        return transformer.emit('error', e)
+      }
       pipesetup(response, transformer)
     })
     return transformer
@@ -1515,8 +1604,12 @@ export class Client {
 
   // * `obj.versionId` _string_: versionId of the object
   listObjects(bucketName, prefix, recursive, listOpts = {}) {
-    if (prefix === undefined) prefix = ''
-    if (recursive === undefined) recursive = false
+    if (prefix === undefined) {
+      prefix = ''
+    }
+    if (recursive === undefined) {
+      recursive = false
+    }
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1547,7 +1640,9 @@ export class Client {
         readStream.push(objects.shift())
         return
       }
-      if (ended) return readStream.push(null)
+      if (ended) {
+        return readStream.push(null)
+      }
       // if there are no objects to push do query for the next batch of objects
       this.listObjectsQuery(bucketName, prefix, marker, listQueryOpts)
         .on('error', (e) => readStream.emit('error', e))
@@ -1633,7 +1728,9 @@ export class Client {
     var method = 'GET'
     var transformer = transformers.getListObjectsV2Transformer()
     this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
-      if (e) return transformer.emit('error', e)
+      if (e) {
+        return transformer.emit('error', e)
+      }
       pipesetup(response, transformer)
     })
     return transformer
@@ -1653,9 +1750,15 @@ export class Client {
 
   //   * `obj.lastModified` _Date_: modified time stamp
   listObjectsV2(bucketName, prefix, recursive, startAfter) {
-    if (prefix === undefined) prefix = ''
-    if (recursive === undefined) recursive = false
-    if (startAfter === undefined) startAfter = ''
+    if (prefix === undefined) {
+      prefix = ''
+    }
+    if (recursive === undefined) {
+      recursive = false
+    }
+    if (startAfter === undefined) {
+      startAfter = ''
+    }
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1683,7 +1786,9 @@ export class Client {
         readStream.push(objects.shift())
         return
       }
-      if (ended) return readStream.push(null)
+      if (ended) {
+        return readStream.push(null)
+      }
       // if there are no objects to push do query for the next batch of objects
       this.listObjectsV2Query(bucketName, prefix, continuationToken, delimiter, 1000, startAfter)
         .on('error', (e) => readStream.emit('error', e))
@@ -1731,7 +1836,9 @@ export class Client {
     var query = querystring.stringify(statOpts)
     var method = 'HEAD'
     this.makeRequest({ method, bucketName, objectName, query }, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
 
       // We drain the socket so that the connection gets closed. Note that this
       // is not expensive as the socket will not have any data.
@@ -1859,7 +1966,9 @@ export class Client {
         headers['Content-MD5'] = toMd5(payload)
 
         this.makeRequest({ method, bucketName, query, headers }, payload, [200], '', true, (e, response) => {
-          if (e) return cb(e)
+          if (e) {
+            return cb(e)
+          }
           let removeObjectsResult
           pipesetup(response, transformers.removeObjectsTransformer())
             .on('data', (data) => {
@@ -1894,7 +2003,9 @@ export class Client {
     let method = 'GET'
     let query = 'policy'
     this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
 
       let policy = Buffer.from('')
       pipesetup(response, transformers.getConcater())
@@ -1981,7 +2092,9 @@ export class Client {
     }
     var query = querystring.stringify(reqParams)
     this.getBucketRegion(bucketName, (e, region) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
       // This statement is added to ensure that we send error through
       // callback on presign failure.
       var url
@@ -2075,7 +2188,9 @@ export class Client {
       throw new TypeError('cb should be of type "function"')
     }
     this.getBucketRegion(postPolicy.formData.bucket, (e, region) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
       var date = new Date()
       var dateStr = makeDateLong(date)
 
@@ -2137,7 +2252,9 @@ export class Client {
     let headers = Object.assign({}, metaData)
     var query = 'uploads'
     this.makeRequest({ method, bucketName, objectName, query, headers }, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
       var transformer = transformers.getInitiateMultipartTransformer()
       pipesetup(response, transformer)
         .on('error', (e) => cb(e))
@@ -2189,7 +2306,9 @@ export class Client {
     var payload = Xml(payloadObject)
 
     this.makeRequest({ method, bucketName, objectName, query }, payload, [200], '', true, (e, response) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
       var transformer = transformers.getCompleteMultipartTransformer()
       pipesetup(response, transformer)
         .on('error', (e) => cb(e))
@@ -2268,7 +2387,9 @@ export class Client {
 
     var method = 'GET'
     this.makeRequest({ method, bucketName, objectName, query }, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
       var transformer = transformers.getListPartsTransformer()
       pipesetup(response, transformer)
         .on('error', (e) => cb(e))
@@ -2316,7 +2437,9 @@ export class Client {
     var method = 'GET'
     var transformer = transformers.getListMultipartTransformer()
     this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
-      if (e) return transformer.emit('error', e)
+      if (e) {
+        return transformer.emit('error', e)
+      }
       pipesetup(response, transformer)
     })
     return transformer
@@ -2353,7 +2476,9 @@ export class Client {
             listNext(result.nextKeyMarker, result.nextUploadIdMarker)
             return
           }
-          if (latestUpload) return cb(null, latestUpload.uploadId)
+          if (latestUpload) {
+            return cb(null, latestUpload.uploadId)
+          }
           cb(null, undefined)
         })
     }
@@ -2422,7 +2547,9 @@ export class Client {
         headers = Object.assign({}, metaData, headers)
       }
 
-      if (!this.enableSHA256) headers['Content-MD5'] = md5sum
+      if (!this.enableSHA256) {
+        headers['Content-MD5'] = md5sum
+      }
       this.makeRequestStream(
         { method, bucketName, objectName, query, headers },
         stream,
@@ -2431,7 +2558,9 @@ export class Client {
         '',
         true,
         (e, response) => {
-          if (e) return cb(e)
+          if (e) {
+            return cb(e)
+          }
           const result = {
             etag: sanitizeETag(response.headers.etag),
             versionId: getVersionId(response.headers),
@@ -2487,7 +2616,9 @@ export class Client {
     var method = 'GET'
     var query = 'notification'
     this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
       var transformer = transformers.getBucketNotificationTransformer()
       var bucketNotification
       pipesetup(response, transformer)
@@ -2528,7 +2659,9 @@ export class Client {
     var query = 'versioning'
 
     this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
 
       let versionConfig = Buffer.from('')
       pipesetup(response, transformers.bucketVersioningTransformer())
@@ -2744,7 +2877,9 @@ export class Client {
 
     this.makeRequest(requestOptions, '', [200], '', true, (e, response) => {
       var transformer = transformers.getTagsTransformer()
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
       let tagsList
       pipesetup(response, transformer)
         .on('data', (result) => (tagsList = result))
@@ -2790,7 +2925,9 @@ export class Client {
 
     this.makeRequest(requestOptions, '', [200], '', true, (e, response) => {
       const transformer = transformers.getTagsTransformer()
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
       let tagsList
       pipesetup(response, transformer)
         .on('data', (result) => (tagsList = result))
@@ -2867,7 +3004,9 @@ export class Client {
 
     this.makeRequest(requestOptions, '', [200], '', true, (e, response) => {
       const transformer = transformers.lifecycleTransformer()
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
       let lifecycleConfig
       pipesetup(response, transformer)
         .on('data', (result) => (lifecycleConfig = result))
@@ -2946,7 +3085,9 @@ export class Client {
     const query = 'object-lock'
 
     this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
 
       let objectLockConfig = Buffer.from('')
       pipesetup(response, transformers.objectLockTransformer())
@@ -3039,7 +3180,9 @@ export class Client {
     }
 
     this.makeRequest({ method, bucketName, objectName, query }, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
 
       let retentionConfig = Buffer.from('')
       pipesetup(response, transformers.objectRetentionTransformer())
@@ -3110,7 +3253,9 @@ export class Client {
     const query = 'encryption'
 
     this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
 
       let bucketEncConfig = Buffer.from('')
       pipesetup(response, transformers.bucketEncryptionTransformer())
@@ -3188,7 +3333,9 @@ export class Client {
     const query = 'replication'
 
     this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
 
       let replicationConfig = Buffer.from('')
       pipesetup(response, transformers.replicationConfigTransformer())
@@ -3242,7 +3389,9 @@ export class Client {
     }
 
     this.makeRequest({ method, bucketName, objectName, query }, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
 
       let legalHoldConfig = Buffer.from('')
       pipesetup(response, transformers.objectLegalHoldTransformer())
@@ -3373,7 +3522,9 @@ export class Client {
     const requestOptions = { method, bucketName, objectName: objectName, query, headers }
     return this.makeRequest(requestOptions, '', [200], '', true, (e, response) => {
       let partCopyResult = Buffer.from('')
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
       pipesetup(response, transformers.uploadPartTransformer())
         .on('data', (data) => {
           partCopyResult = data
@@ -3631,7 +3782,9 @@ export class Client {
     const payload = builder.buildObject(config)
 
     this.makeRequest({ method, bucketName, objectName, query }, payload, [200], '', true, (e, response) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
 
       let selectResult
       pipesetup(response, transformers.selectObjectContentTransformer())
@@ -3707,13 +3860,17 @@ export class CopyConditions {
   }
 
   setModified(date) {
-    if (!(date instanceof Date)) throw new TypeError('date must be of type Date')
+    if (!(date instanceof Date)) {
+      throw new TypeError('date must be of type Date')
+    }
 
     this.modified = date.toUTCString()
   }
 
   setUnmodified(date) {
-    if (!(date instanceof Date)) throw new TypeError('date must be of type Date')
+    if (!(date instanceof Date)) {
+      throw new TypeError('date must be of type Date')
+    }
 
     this.unmodified = date.toUTCString()
   }

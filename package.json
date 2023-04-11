@@ -17,6 +17,13 @@
     "lint-staged": "lint-staged",
     "prepare": "husky install"
   },
+  "exports": {
+    ".": {
+      "require": "./dist/cjs/minio.cjs",
+      "default": "./dist/esm/minio.mjs"
+    },
+    "./package.json": "./package.json"
+  },
   "prettier": {
     "printWidth": 120,
     "singleQuote": true,

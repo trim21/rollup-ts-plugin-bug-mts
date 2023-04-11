@@ -8,6 +8,8 @@
     "allowSyntheticDefaultImports": true,
     "allowJs": true,
     "esModuleInterop": true,
-    "allowImportingTsExtensions": true
-  }
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+  "include": ["./src/main/*"]
 }

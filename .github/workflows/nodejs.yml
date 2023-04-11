@@ -32,9 +32,8 @@ jobs:
 
       - run: npm ci
 
+      - run: npx tsc --noEmit
       - run: npm run build
-
-      - run: npm run browserify
 
   test:
     name: Test on node ${{ matrix.node_version }} and ${{ matrix.os }}

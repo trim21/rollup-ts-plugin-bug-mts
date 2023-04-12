@@ -139,6 +139,7 @@ export interface LifecycleRule {
 }
 
 export interface LockConfig {
+  objectLockEnabled?: 'Enabled'
   mode: Mode
   unit: LockUnit
   validity: number

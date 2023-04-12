@@ -25,8 +25,7 @@ export interface ICredentials {
 
 type ResponseCallback = (err: unknown, res: IncomingMessage) => void
 
-// TODO: I don't know that it is
-export type UploadID = unknown
+export type UploadID = string
 
 export interface IClient extends Client {
   enableSHA256: boolean

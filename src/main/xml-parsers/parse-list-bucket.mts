@@ -1,9 +1,10 @@
 // parse XML response to list all the owned buckets
 import * as errors from '../errors.mts'
 import { parseXml, toArray } from '../helpers.mts'
+import type { BucketItemFromList } from "../minio.d.ts"
 
-export function parseListBucket(xml: string) {
-  let result = []
+export function parseListBucket(xml: string): BucketItemFromList[] {
+  let result: BucketItemFromList[] = []
   let xmlobj = parseXml(xml)
 
   if (!xmlobj.ListAllMyBucketsResult) {

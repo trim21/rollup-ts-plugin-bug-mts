@@ -389,17 +389,17 @@ export function sanitizeETag(etag = ''): string {
 export const RETENTION_MODES = {
   GOVERNANCE: 'GOVERNANCE',
   COMPLIANCE: 'COMPLIANCE',
-}
+} as const
 
 export const RETENTION_VALIDITY_UNITS = {
   DAYS: 'Days',
   YEARS: 'Years',
-}
+} as const
 
 export const LEGAL_HOLD_STATUS = {
   ENABLED: 'ON',
   DISABLED: 'OFF',
-}
+} as const
 
 const objectToBuffer = (payload: Crypto.BinaryLike): Buffer => {
   // don't know how to write this...

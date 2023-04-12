@@ -16,13 +16,36 @@
 
 import Crypto from 'crypto'
 import * as querystring from 'query-string'
-import { Transform } from 'stream'
+import { Transform, TransformCallback } from 'stream'
 
-import { getVersionId, sanitizeETag } from './helpers'
+import { getVersionId, sanitizeETag } from './helpers.mts'
+import { IClient, UploadID } from './type.ts'
+
+type Result = { etag: string; versionId: string | null }
+type Callback = (error?: unknown, result?: Result) => void
 
 // We extend Transform because Writable does not implement ._flush().
 export default class ObjectUploader extends Transform {
-  constructor(client, bucketName, objectName, partSize, metaData, callback) {
+  private emptyStream: boolean
+  private client: IClient
+  private bucketName: string
+  private objectName: string
+  private partSize: number
+  private metaData: Record<string, string>
+  private callback: Callback
+  private partNumber: number
+  private oldParts: null | Record<number, { etag?: string }>
+  private etags: { part: number; etag?: string }[]
+  private id: null | UploadID
+
+  constructor(
+    client: IClient,
+    bucketName: string,
+    objectName: string,
+    partSize: number,
+    metaData: Record<string, string>,
+    callback: Callback
+  ) {
     super()
     this.emptyStream = true
     this.client = client
@@ -58,11 +81,11 @@ export default class ObjectUploader extends Transform {
     })
   }
 
-  _transform(chunk, encoding, callback) {
+  _transform(chunk: Buffer | string, encoding: string, callback: TransformCallback) {
     this.emptyStream = false
     let method = 'PUT'
-    let headers = { 'Content-Length': chunk.length }
-    let md5digest = ''
+    let headers: Record<string, string | number> = { 'Content-Length': chunk.length }
+    let md5digest: Buffer | undefined
 
     // Calculate and set Content-MD5 header if SHA256 is not set.
     // This will happen only when there is a secure connection to the s3 server.
@@ -86,7 +109,7 @@ export default class ObjectUploader extends Transform {
 
       this.client.makeRequest(options, chunk, [200], '', true, (err, response) => {
         if (err) {
-          return callback(err)
+          return callback(err as Error)
         }
         let result = {
           etag: sanitizeETag(response.headers.etag),
@@ -152,7 +175,13 @@ export default class ObjectUploader extends Transform {
           }
 
           // oldParts will become an object, allowing oldParts[partNumber].etag
-          this.oldParts = etags.reduce(function (prev, item) {
+          this.oldParts = etags.reduce(function (
+            prev: Record<number, { etag?: string }>,
+            item: {
+              part: number
+              etag?: string
+            }
+          ) {
             if (!prev[item.part]) {
               prev[item.part] = item
             }
@@ -204,7 +233,7 @@ export default class ObjectUploader extends Transform {
 
     this.client.makeRequest(options, chunk, [200], '', true, (err, response) => {
       if (err) {
-        return callback(err)
+        return callback(err as Error)
       }
 
       // In order to aggregate the parts together, we need to collect the etags.
@@ -223,7 +252,7 @@ export default class ObjectUploader extends Transform {
     })
   }
 
-  _flush(callback) {
+  _flush(callback: TransformCallback) {
     if (this.emptyStream) {
       let method = 'PUT'
       let headers = Object.assign({}, this.metaData, { 'Content-Length': 0 })
@@ -237,10 +266,10 @@ export default class ObjectUploader extends Transform {
 
       this.client.makeRequest(options, '', [200], '', true, (err, response) => {
         if (err) {
-          return callback(err)
+          return callback(err as Error)
         }
 
-        let result = {
+        let result: Result = {
           etag: sanitizeETag(response.headers.etag),
           versionId: getVersionId(response.headers),
         }

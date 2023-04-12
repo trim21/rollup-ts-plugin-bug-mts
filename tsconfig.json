@@ -3,6 +3,7 @@
     "target": "ESNext",
     "moduleResolution": "Node",
     "module": "ESNext",
+    "allowJs": true,
     "strict": true,
     "strictNullChecks": true,
     "allowSyntheticDefaultImports": true,

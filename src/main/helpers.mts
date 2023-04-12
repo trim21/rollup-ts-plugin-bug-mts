@@ -371,7 +371,7 @@ export function extractMetadata(metaData: MetaData) {
 }
 
 export function getVersionId(headers: IncomingHttpHeaders = {}) {
-  const versionIdValue = headers['x-amz-version-id']
+  const versionIdValue = headers['x-amz-version-id'] as string
   return versionIdValue || null
 }
 

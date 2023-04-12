@@ -5,6 +5,7 @@ import { RequestOptions } from 'https'
 import { Readable as ReadableStream } from 'stream'
 
 import { Region } from './s3-endpoints.mts'
+import { UploadID } from './type.ts'
 
 // Exports only from typings
 export { Region }

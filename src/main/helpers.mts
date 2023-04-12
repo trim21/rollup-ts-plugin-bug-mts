@@ -14,21 +14,68 @@
  * limitations under the License.
  */
 
+import * as Crypto from 'node:crypto'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
+import * as stream from 'node:stream'
+
 import { isBrowser } from 'browser-or-node'
-import * as crypto from 'crypto'
 import { XMLParser } from 'fast-xml-parser'
+import { IncomingHttpHeaders } from 'http'
 import ipaddr from 'ipaddr.js'
 import _ from 'lodash'
 import mime from 'mime-types'
 import querystring from 'query-string'
 
-import { isNumber, isObject, isString } from './asserts'
-import * as errors from './errors'
+import * as errors from './errors.mts'
+
+export type MetaData = Record<string, string | number>
+export type Header = Record<string, string | null | undefined>
 
 const fxp = new XMLParser()
 
+// All characters in string which are NOT unreserved should be percent encoded.
+// Unreserved characers are : ALPHA / DIGIT / "-" / "." / "_" / "~"
+// Reference https://tools.ietf.org/html/rfc3986#section-2.2
+export function uriEscape(string: string) {
+  return string.split('').reduce((acc: string, elem: string) => {
+    let buf = Buffer.from(elem)
+    if (buf.length === 1) {
+      // length 1 indicates that elem is not a unicode character.
+      // Check if it is an unreserved characer.
+      if (
+        ('A' <= elem && elem <= 'Z') ||
+        ('a' <= elem && elem <= 'z') ||
+        ('0' <= elem && elem <= '9') ||
+        elem === '_' ||
+        elem === '.' ||
+        elem === '~' ||
+        elem === '-'
+      ) {
+        // Unreserved characer should not be encoded.
+        acc = acc + elem
+        return acc
+      }
+    }
+    // elem needs encoding - i.e elem should be encoded if it's not unreserved
+    // character or if it's a unicode character.
+    for (let i = 0; i < buf.length; i++) {
+      acc = acc + '%' + buf[i].toString(16).toUpperCase()
+    }
+    return acc
+  }, '')
+}
+
+export function uriResourceEscape(string: string) {
+  return uriEscape(string).replace(/%2F/g, '/')
+}
+
+export function getScope(region: string, date: Date, serviceName = 's3') {
+  return `${makeDateShort(date)}/${region}/${serviceName}/aws4_request`
+}
+
 // isAmazonEndpoint - true if endpoint is 's3.amazonaws.com' or 's3.cn-north-1.amazonaws.com.cn'
-export function isAmazonEndpoint(endpoint) {
+export function isAmazonEndpoint(endpoint: string) {
   return endpoint === 's3.amazonaws.com' || endpoint === 's3.cn-north-1.amazonaws.com.cn'
 }
 
@@ -37,24 +84,24 @@ export function isAmazonEndpoint(endpoint) {
 // style if the protocol is 'https:', this is due to SSL wildcard
 // limitation. For all other buckets and Amazon S3 endpoint we will
 // default to virtual host style.
-export function isVirtualHostStyle(endpoint, protocol, bucket, pathStyle) {
+export function isVirtualHostStyle(endpoint: string, protocol: string, bucket: string, pathStyle: boolean) {
   if (protocol === 'https:' && bucket.indexOf('.') > -1) {
     return false
   }
   return isAmazonEndpoint(endpoint) || !pathStyle
 }
 
-export function isValidIP(ip) {
+export function isValidIP(ip: string) {
   return ipaddr.isValid(ip)
 }
 
 // isValidEndpoint - true if endpoint is valid domain.
-export function isValidEndpoint(endpoint) {
+export function isValidEndpoint(endpoint: string) {
   return isValidDomain(endpoint) || isValidIP(endpoint)
 }
 
 // isValidDomain - true if input host is a valid domain.
-export function isValidDomain(host) {
+export function isValidDomain(host: string) {
   if (!isString(host)) {
     return false
   }
@@ -74,9 +121,9 @@ export function isValidDomain(host) {
   if (host[0] === '.') {
     return false
   }
-  var alphaNumerics = '`~!@#$%^&*()+={}[]|\\"\';:><?/'.split('')
+  let alphaNumerics = '`~!@#$%^&*()+={}[]|\\"\';:><?/'.split('')
   // All non alphanumeric characters are invalid.
-  for (var i in alphaNumerics) {
+  for (let i in alphaNumerics) {
     if (host.indexOf(alphaNumerics[i]) > -1) {
       return false
     }
@@ -88,7 +135,7 @@ export function isValidDomain(host) {
 
 // Probes contentType using file extensions.
 // For example: probeContentType('file.png') returns 'image/png'.
-export function probeContentType(path) {
+export function probeContentType(path: string) {
   let contentType = mime.lookup(path)
   if (!contentType) {
     contentType = 'application/octet-stream'
@@ -97,7 +144,7 @@ export function probeContentType(path) {
 }
 
 // isValidPort - is input port valid.
-export function isValidPort(port) {
+export function isValidPort(port: unknown): port is number {
   // verify if port is a number.
   if (!isNumber(port)) {
     return false
@@ -110,13 +157,13 @@ export function isValidPort(port) {
   if (port === 0) {
     return true
   }
-  var min_port = 1
-  var max_port = 65535
+  let min_port = 1
+  let max_port = 65535
   // Verify if port is in range.
   return port >= min_port && port <= max_port
 }
 
-export function isValidBucketName(bucket) {
+export function isValidBucketName(bucket: any) {
   if (!isString(bucket)) {
     return false
   }
@@ -143,7 +190,7 @@ export function isValidBucketName(bucket) {
 }
 
 // check if objectName is a valid object name
-export function isValidObjectName(objectName) {
+export function isValidObjectName(objectName: any) {
   if (!isValidPrefix(objectName)) {
     return false
   }
@@ -154,7 +201,7 @@ export function isValidObjectName(objectName) {
 }
 
 // check if prefix is valid
-export function isValidPrefix(prefix) {
+export function isValidPrefix(prefix: any) {
   if (!isString(prefix)) {
     return false
   }
@@ -164,25 +211,112 @@ export function isValidPrefix(prefix) {
   return true
 }
 
+// check if typeof arg number
+export function isNumber(arg: unknown): arg is number {
+  return typeof arg === 'number'
+}
+
+// check if typeof arg function
+export function isFunction(arg: unknown): arg is () => unknown {
+  return typeof arg === 'function'
+}
+
+// check if typeof arg string
+export function isString(arg: unknown): arg is string {
+  return typeof arg === 'string'
+}
+
+// check if typeof arg object
+export function isObject(arg: unknown): arg is object {
+  return typeof arg === 'object' && arg !== null
+}
+
+// check if object is readable stream
+export function isReadableStream(arg: unknown): arg is ReadableStream {
+  // @ts-expect-error ._read prop
+  return isObject(arg) && isFunction(arg._read)
+}
+
+// check if arg is boolean
+export function isBoolean(arg: unknown): arg is boolean {
+  return typeof arg === 'boolean'
+}
+
+// check if arg is array
+export function isArray(arg: unknown): arg is Array<unknown> {
+  return Array.isArray(arg)
+}
+
+export function isEmpty<T>(o: unknown): o is Exclude<T, null | undefined> {
+  return _.isEmpty(o)
+}
+
+// check if arg is a valid date
+export function isValidDate(arg: unknown): arg is Date {
+  // @ts-expect-error TS(2345): Argument of type 'Date' is not assignable to param... Remove this comment to see the full error message
+  return arg instanceof Date && !isNaN(arg)
+}
+
+// Create a Date string with format:
+// 'YYYYMMDDTHHmmss' + Z
+export function makeDateLong(date?: Date): string {
+  date = date || new Date()
+
+  // Gives format like: '2017-08-07T16:28:59.889Z'
+  const s = date.toISOString()
+
+  return s.slice(0, 4) + s.slice(5, 7) + s.slice(8, 13) + s.slice(14, 16) + s.slice(17, 19) + 'Z'
+}
+
+// Create a Date string with format:
+// 'YYYYMMDD'
+export function makeDateShort(date?: Date) {
+  date = date || new Date()
+
+  // Gives format like: '2017-08-07T16:28:59.889Z'
+  const s = date.toISOString()
+
+  return s.slice(0, 4) + s.slice(5, 7) + s.slice(8, 10)
+}
+
+// pipesetup sets up pipe() from left to right os streams array
+// pipesetup will also make sure that error emitted at any of the upstream Stream
+// will be emitted at the last stream. This makes error handling simple
+export function pipesetup(...streams: any[]) {
+  return streams.reduce((src, dst) => {
+    src.on('error', (err: any) => dst.emit('error', err))
+    return src.pipe(dst)
+  })
+}
+
+// return a Readable stream that emits data
+export function readableStream(data: any) {
+  let s = new stream.Readable()
+  s._read = () => {}
+  s.push(data)
+  s.push(null)
+  return s
+}
+
 // Process metadata to insert appropriate value to `content-type` attribute
-export function insertContentType(metaData, filePath) {
+export function insertContentType(metaData: MetaData, filePath: string) {
   // check if content-type attribute present in metaData
-  for (var key in metaData) {
+  for (let key in metaData) {
     if (key.toLowerCase() === 'content-type') {
       return metaData
     }
   }
   // if `content-type` attribute is not present in metadata,
   // then infer it from the extension in filePath
-  var newMetadata = Object.assign({}, metaData)
+  let newMetadata = Object.assign({}, metaData)
   newMetadata['content-type'] = probeContentType(filePath)
   return newMetadata
 }
 
 // Function prepends metadata with the appropriate prefix if it is not already on
-export function prependXAMZMeta(metaData) {
-  var newMetadata = Object.assign({}, metaData)
-  for (var key in metaData) {
+export function prependXAMZMeta(metaData: MetaData) {
+  let newMetadata = Object.assign({}, metaData)
+  for (let key in metaData) {
     if (!isAmzHeader(key) && !isSupportedHeader(key) && !isStorageclassHeader(key)) {
       newMetadata['X-Amz-Meta-' + key] = newMetadata[key]
       delete newMetadata[key]
@@ -192,8 +326,8 @@ export function prependXAMZMeta(metaData) {
 }
 
 // Checks if it is a valid header according to the AmazonS3 API
-export function isAmzHeader(key) {
-  var temp = key.toLowerCase()
+export function isAmzHeader(key: string) {
+  let temp = key.toLowerCase()
   return (
     temp.startsWith('x-amz-meta-') ||
     temp === 'x-amz-acl' ||
@@ -203,8 +337,8 @@ export function isAmzHeader(key) {
 }
 
 // Checks if it is a supported Header
-export function isSupportedHeader(key) {
-  var supported_headers = [
+export function isSupportedHeader(key: string) {
+  let supported_headers = [
     'content-type',
     'cache-control',
     'content-encoding',
@@ -216,22 +350,40 @@ export function isSupportedHeader(key) {
 }
 
 // Checks if it is a storage header
-export function isStorageclassHeader(key) {
+export function isStorageclassHeader(key: string) {
   return key.toLowerCase() === 'x-amz-storage-class'
 }
 
-export function extractMetadata(metaData) {
-  var newMetadata = {}
-  for (var key in metaData) {
+export function extractMetadata(metaData: MetaData) {
+  let newMetadata = {}
+  for (let key in metaData) {
     if (isSupportedHeader(key) || isStorageclassHeader(key) || isAmzHeader(key)) {
       if (key.toLowerCase().startsWith('x-amz-meta-')) {
+        // @ts-expect-error TS(7053): Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
         newMetadata[key.slice(11, key.length)] = metaData[key]
       } else {
+        // @ts-expect-error TS(7053): Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
         newMetadata[key] = metaData[key]
       }
     }
   }
   return newMetadata
+}
+
+export function getVersionId(headers: IncomingHttpHeaders = {}) {
+  const versionIdValue = headers['x-amz-version-id']
+  return versionIdValue || null
+}
+
+export function getSourceVersionId(headers: IncomingHttpHeaders = {}) {
+  const sourceVersionId = headers['x-amz-copy-source-version-id']
+  return sourceVersionId || null
+}
+
+export function sanitizeETag(etag = ''): string {
+  let replaceChars = { '"': '', '&quot;': '', '&#34;': '', '&QUOT;': '', '&#x00022': '' }
+  // @ts-expect-error TS(7053): Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
+  return etag.replace(/^("|&quot;|&#34;)|("|&quot;|&#34;)$/g, (m) => replaceChars[m])
 }
 
 export const RETENTION_MODES = {
@@ -249,38 +401,37 @@ export const LEGAL_HOLD_STATUS = {
   DISABLED: 'OFF',
 }
 
-const objectToBuffer = (payload) => {
-  const payloadBuf = Buffer.from(Buffer.from(payload))
-  return payloadBuf
+const objectToBuffer = (payload: Crypto.BinaryLike): Buffer => {
+  // don't know how to write this...
+  return Buffer.from(payload as Buffer)
 }
 
-export const toMd5 = (payload) => {
-  let payLoadBuf = objectToBuffer(payload)
+export const toMd5 = (payload: Crypto.BinaryLike): string => {
+  let payLoadBuf: string | Buffer = objectToBuffer(payload)
   // use string from browser and buffer from nodejs
   // browser support is tested only against minio server
   payLoadBuf = isBrowser ? payLoadBuf.toString() : payLoadBuf
-  return crypto.createHash('md5').update(payLoadBuf).digest().toString('base64')
+  return Crypto.createHash('md5').update(payLoadBuf).digest().toString('base64')
 }
 
-export const toSha256 = (payload) => {
-  return crypto.createHash('sha256').update(payload).digest('hex')
+export const toSha256 = (payload: Crypto.BinaryLike) => {
+  return Crypto.createHash('sha256').update(payload).digest('hex')
 }
 
 // toArray returns a single element array with param being the element,
 // if param is just a string, and returns 'param' back if it is an array
 // So, it makes sure param is always an array
-export const toArray = (param) => {
+export const toArray = (param: unknown): Array<unknown> => {
   if (!Array.isArray(param)) {
     return [param]
   }
   return param
 }
 
-export const sanitizeObjectKey = (objectName) => {
+export const sanitizeObjectKey = (objectName: string): string => {
   // + symbol characters are not decoded as spaces in JS. so replace them first and decode to get the correct result.
   let asStrName = (objectName ? objectName.toString() : '').replace(/\+/g, ' ')
-  const sanitizedName = decodeURIComponent(asStrName)
-  return sanitizedName
+  return decodeURIComponent(asStrName)
 }
 
 export const PART_CONSTRAINTS = {
@@ -321,12 +472,13 @@ const ENCRYPTION_HEADERS = {
  * @param encConfig
  * @returns an object with key value pairs that can be used in headers.
  */
-function getEncryptionHeaders(encConfig) {
+function getEncryptionHeaders(encConfig: Encryption): Header {
   const encType = encConfig.type
   const encHeaders = {}
   if (!_.isEmpty(encType)) {
     if (encType === ENCRYPTION_TYPES.SSEC) {
       return {
+        // @ts-expect-error TS(7053): Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
         [encHeaders[ENCRYPTION_HEADERS.sseGenericHeader]]: 'AES256',
       }
     } else if (encType === ENCRYPTION_TYPES.KMS) {
@@ -341,6 +493,18 @@ function getEncryptionHeaders(encConfig) {
 }
 
 export class CopySourceOptions {
+  private Bucket: string
+  private Object: string
+  private VersionID: string
+  private MatchETag: string
+  private NoMatchETag: string
+  private MatchModifiedSince: string | null
+  private MatchUnmodifiedSince: string | null
+  private MatchRange: boolean
+  private Start: number
+  private End: number
+  private Encryption: Encryption
+
   /**
    *
    * @param Bucket __string__ Bucket Name
@@ -367,6 +531,18 @@ export class CopySourceOptions {
     Start = 0,
     End = 0,
     Encryption = {},
+  }: {
+    Bucket?: string
+    Object?: string
+    VersionID?: string
+    MatchETag?: string
+    NoMatchETag?: string
+    MatchModifiedSince?: string | null
+    MatchUnmodifiedSince?: string | null
+    MatchRange?: boolean
+    Start?: number
+    End?: number
+    Encryption?: Encryption
   } = {}) {
     this.Bucket = Bucket
     this.Object = Object
@@ -400,7 +576,7 @@ export class CopySourceOptions {
   }
 
   getHeaders() {
-    let headerOptions = {}
+    let headerOptions: Header = {}
     headerOptions['x-amz-copy-source'] = encodeURI(this.Bucket + '/' + this.Object)
 
     if (!_.isEmpty(this.VersionID)) {
@@ -425,7 +601,22 @@ export class CopySourceOptions {
   }
 }
 
+interface Encryption {
+  type?: string
+  SSEAlgorithm?: string
+  KMSMasterKeyID?: string
+}
+
 export class CopyDestinationOptions {
+  private Bucket: string
+  private Object: string
+  private Encryption: Encryption | null
+  private UserMetadata: MetaData | null
+  private UserTags: Record<string, any> | string | null
+  private LegalHold: 'on' | 'off' | null
+  private RetainUntilDate: string | null
+  private Mode: 'GOVERNANCE' | 'COMPLIANCE' | null
+
   /*
    * @param Bucket __string__
    * @param Object __string__ Object Name for the destination (composed/copied) object defaults
@@ -445,6 +636,15 @@ export class CopyDestinationOptions {
     LegalHold = null,
     RetainUntilDate = null,
     Mode = null, //
+  }: {
+    Bucket?: string
+    Object?: string
+    Encryption?: Encryption | null
+    UserMetadata?: MetaData | null
+    UserTags?: Record<string, any> | string | null
+    LegalHold?: 'on' | 'off' | null
+    RetainUntilDate?: string | null
+    Mode?: 'GOVERNANCE' | 'COMPLIANCE' | null
   }) {
     this.Bucket = Bucket
     this.Object = Object
@@ -458,7 +658,7 @@ export class CopyDestinationOptions {
 
   getHeaders() {
     const replaceDirective = 'REPLACE'
-    const headerOptions = {}
+    const headerOptions: Header = {}
 
     const userTags = this.UserTags
     if (!_.isEmpty(userTags)) {
@@ -483,20 +683,20 @@ export class CopyDestinationOptions {
     }
 
     if (!_.isEmpty(this.UserMetadata)) {
-      const headerKeys = Object.keys(this.UserMetadata)
-      headerKeys.forEach((key) => {
-        headerOptions[`X-Amz-Meta-${key}`] = this.UserMetadata[key]
-      })
+      for (const [key, value] of Object.entries(this.UserMetadata)) {
+        headerOptions[`X-Amz-Meta-${key}`] = value.toString()
+      }
     }
 
     if (!_.isEmpty(this.Encryption)) {
       const encryptionHeaders = getEncryptionHeaders(this.Encryption)
-      Object.keys(encryptionHeaders).forEach((key) => {
-        headerOptions[key] = encryptionHeaders[key]
-      })
+      for (const [key, value] of Object.entries(encryptionHeaders)) {
+        headerOptions[key] = value
+      }
     }
     return headerOptions
   }
+
   validate() {
     if (!isValidBucketName(this.Bucket)) {
       throw new errors.InvalidBucketNameError('Invalid Destination bucket name: ' + this.Bucket)
@@ -508,20 +708,20 @@ export class CopyDestinationOptions {
       throw new errors.InvalidObjectNameError(`Destination UserMetadata should be an object with key value pairs`)
     }
 
-    if (!_.isEmpty(this.Mode) && ![RETENTION_MODES.GOVERNANCE, RETENTION_MODES.COMPLIANCE].includes(this.Mode)) {
+    if (!isEmpty(this.Mode) && ![RETENTION_MODES.GOVERNANCE, RETENTION_MODES.COMPLIANCE].includes(this.Mode)) {
       throw new errors.InvalidObjectNameError(
         `Invalid Mode specified for destination object it should be one of [GOVERNANCE,COMPLIANCE]`
       )
     }
 
-    if (!_.isEmpty(this.Encryption) && _.isEmpty(this.Encryption)) {
+    if (!isEmpty(this.Encryption) && _.isEmpty(this.Encryption)) {
       throw new errors.InvalidObjectNameError(`Invalid Encryption configuration for destination object `)
     }
     return true
   }
 }
 
-export const partsRequired = (size) => {
+export const partsRequired = (size: number) => {
   let maxPartSize = PART_CONSTRAINTS.MAX_MULTIPART_PUT_OBJECT_SIZE / (PART_CONSTRAINTS.MAX_PARTS_COUNT - 1)
   let requiredPartSize = size / maxPartSize
   if (size % maxPartSize > 0) {
@@ -538,7 +738,8 @@ export const partsRequired = (size) => {
 
 let startIndexParts = []
 let endIndexParts = []
-export function calculateEvenSplits(size, objInfo) {
+
+export function calculateEvenSplits(size: number, objInfo: { Start?: unknown }) {
   if (size === 0) {
     return null
   }
@@ -546,7 +747,7 @@ export function calculateEvenSplits(size, objInfo) {
   startIndexParts = new Array(reqParts)
   endIndexParts = new Array(reqParts)
 
-  let start = objInfo.Start
+  let start = objInfo.Start as number
   if (_.isEmpty(objInfo.Start) || start === -1) {
     start = 0
   }
@@ -573,7 +774,32 @@ export function calculateEvenSplits(size, objInfo) {
   return { startIndex: startIndexParts, endIndex: endIndexParts, objInfo: objInfo }
 }
 
-export const parseXml = (xml) => {
+export function removeDirAndFiles(dirPath: string, removeSelf?: boolean) {
+  if (removeSelf === undefined) {
+    removeSelf = true
+  }
+  let files: string[]
+  try {
+    files = fs.readdirSync(dirPath)
+  } catch (e) {
+    return
+  }
+  if (files.length > 0) {
+    for (let i = 0; i < files.length; i++) {
+      let filePath = path.join(dirPath, files[i])
+      if (fs.statSync(filePath).isFile()) {
+        fs.unlinkSync(filePath)
+      } else {
+        removeDirAndFiles(filePath)
+      }
+    }
+  }
+  if (removeSelf) {
+    fs.rmdirSync(dirPath)
+  }
+}
+
+export function parseXml(xml: string): any {
   let result = null
   result = fxp.parse(xml)
   if (result.Error) {
@@ -582,3 +808,61 @@ export const parseXml = (xml) => {
 
   return result
 }
+
+export class SelectResults {
+  private records: unknown
+  private response: unknown
+  private stats: unknown
+  private progress: unknown
+
+  constructor({
+    records, // parsed data as stream
+    response, // original response stream
+    stats, // stats as xml
+    progress, // stats as xml
+  }: {
+    records: unknown
+    response: unknown
+    stats: unknown
+    progress: unknown
+  }) {
+    this.records = records
+    this.response = response
+    this.stats = stats
+    this.progress = progress
+  }
+
+  setStats(stats: unknown) {
+    this.stats = stats
+  }
+
+  getStats() {
+    return this.stats
+  }
+
+  setProgress(progress: unknown) {
+    this.progress = progress
+  }
+
+  getProgress() {
+    return this.progress
+  }
+
+  setResponse(response: unknown) {
+    this.response = response
+  }
+
+  getResponse() {
+    return this.response
+  }
+
+  setRecords(records: unknown) {
+    this.records = records
+  }
+
+  getRecords(): unknown {
+    return this.records
+  }
+}
+
+export const DEFAULT_REGION = 'us-east-1'

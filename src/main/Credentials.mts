@@ -1,9 +1,19 @@
-export default class Credentials {
-  private accessKey: string
-  private secretKey: string
-  private sessionToken: string
+import { ICredentials } from './type.ts'
 
-  constructor({ accessKey, secretKey, sessionToken }: { accessKey: string; secretKey: string; sessionToken: string }) {
+export default class Credentials {
+  public accessKey?: string
+  public secretKey?: string
+  public sessionToken?: string
+
+  constructor({
+    accessKey,
+    secretKey,
+    sessionToken,
+  }: {
+    accessKey?: string
+    secretKey?: string
+    sessionToken?: string
+  }) {
     this.accessKey = accessKey
     this.secretKey = secretKey
     this.sessionToken = sessionToken
@@ -33,7 +43,7 @@ export default class Credentials {
     return this.sessionToken
   }
 
-  get() {
+  get(): ICredentials {
     return {
       accessKey: this.accessKey,
       secretKey: this.secretKey,

@@ -18,8 +18,7 @@ import Stream from 'stream'
 
 import { isBoolean, isNumber, isString } from './asserts'
 import * as errors from './errors'
-import { isValidBucketName, isValidPrefix } from './helpers'
-import { pipesetup, uriEscape } from './helpers-typed'
+import { isValidBucketName, isValidPrefix, pipesetup, uriEscape } from './helpers'
 import * as transformers from './transformers'
 
 export default class extensions {

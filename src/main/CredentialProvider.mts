@@ -1,9 +1,18 @@
 import Credentials from './Credentials.mts'
+import { ICredentials } from './type.ts'
 
 export default class CredentialProvider {
   private credentials: Credentials
 
-  constructor({ accessKey, secretKey, sessionToken }: { accessKey: string; secretKey: string; sessionToken: string }) {
+  constructor({
+    accessKey,
+    secretKey,
+    sessionToken,
+  }: {
+    accessKey?: string
+    secretKey?: string
+    sessionToken?: string
+  }) {
     this.credentials = new Credentials({
       accessKey,
       secretKey,
@@ -11,7 +20,7 @@ export default class CredentialProvider {
     })
   }
 
-  getCredentials() {
+  async getCredentials(): Promise<ICredentials | null> {
     return this.credentials.get()
   }
 

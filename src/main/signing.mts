@@ -19,7 +19,7 @@ import _ from 'lodash'
 
 import { isArray, isNumber, isObject, isString } from './asserts.mts'
 import * as errors from './errors.mts'
-import { getScope, makeDateLong, makeDateShort, uriEscape } from './helpers-typed.mts'
+import { getScope, makeDateLong, makeDateShort, uriEscape } from './helpers.mts'
 import type { ICanonicalRequest, IRequest, RequestHeader } from './type.ts'
 
 const signV4Algorithm = 'AWS4-HMAC-SHA256'
@@ -225,7 +225,7 @@ export function signV4(
     throw new errors.SecretKeyRequiredError('secretKey is required for signing')
   }
 
-  const sha256sum = request.headers['x-amz-content-sha256']
+  const sha256sum = request.headers['x-amz-content-sha256'] as string
 
   const signedHeaders = getSignedHeaders(request.headers)
   const canonicalRequest = getCanonicalRequest(request.method, request.path, request.headers, signedHeaders, sha256sum)

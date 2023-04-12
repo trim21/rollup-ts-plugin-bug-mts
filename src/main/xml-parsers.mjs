@@ -19,8 +19,7 @@ import _ from 'lodash'
 
 import { isObject } from './asserts'
 import * as errors from './errors'
-import { parseXml, RETENTION_VALIDITY_UNITS, sanitizeObjectKey, toArray } from './helpers'
-import { readableStream, sanitizeETag } from './helpers-typed'
+import { parseXml, readableStream, RETENTION_VALIDITY_UNITS, sanitizeETag, sanitizeObjectKey, toArray } from './helpers'
 import { SelectResults } from './SelectResults'
 // Parse XML and return information as Javascript types
 const fxp = new XMLParser()

@@ -17,7 +17,7 @@ import crc32 from 'buffer-crc32'
 import { XMLParser } from 'fast-xml-parser'
 import _ from 'lodash'
 
-import * as errors from './errors.mts'
+import * as errors from './errors'
 import {
   isObject,
   parseXml,
@@ -27,7 +27,7 @@ import {
   sanitizeObjectKey,
   SelectResults,
   toArray,
-} from './helpers.mjs'
+} from './helpers'
 // Parse XML and return information as Javascript types
 const fxp = new XMLParser()
 

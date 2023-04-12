@@ -1,4 +1,4 @@
-import Credentials from './Credentials.mjs'
+import Credentials from './Credentials'
 
 class CredentialProvider {
   constructor({ accessKey, secretKey, sessionToken }) {

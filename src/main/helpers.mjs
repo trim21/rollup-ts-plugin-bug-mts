@@ -25,7 +25,7 @@ import path from 'path'
 import querystring from 'query-string'
 import stream from 'stream'
 
-import * as errors from './errors.mts'
+import * as errors from './errors'
 
 const fxp = new XMLParser()
 

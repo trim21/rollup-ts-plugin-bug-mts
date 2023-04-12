@@ -9,7 +9,7 @@
     "format": "prettier -w .",
     "format-check": "prettier --list-different .",
     "build": "rollup -c rollup.config.cjs",
-    "test": "mocha --timeout 5000",
+    "test": "mocha",
     "lint": "eslint --ext js,mjs,cjs,ts,mts,cts ./src/",
     "lint-fix": " eslint --ext js,mjs,cjs,ts,mts,cts ./src/ --fix",
     "prepublishOnly": "npm test",

@@ -19,9 +19,11 @@ import JSONParser from 'json-stream'
 import _ from 'lodash'
 import Through2 from 'through2'
 
-import { isFunction } from './asserts'
-import * as errors from './errors'
-import * as xmlParsers from './xml-parsers'
+import { isFunction } from '../asserts'
+import * as errors from '../errors'
+import { parseError } from './parse-error.mjs'
+import * as xmlParsers from '../xml-parsers'
+import { parseCopyObject } from "./parse-copy-object.mjs"
 
 // getConcater returns a stream that concatenates the input and emits
 // the concatenated output when 'end' has reached. If an optional
@@ -117,7 +119,7 @@ export function getErrorTransformer(response) {
     }
     let e
     try {
-      e = xmlParsers.parseError(xmlString, headerInfo)
+      e = parseError(xmlString, headerInfo)
     } catch (ex) {
       return getError()
     }
@@ -160,7 +162,7 @@ export function getHashSummer(enableSHA256) {
 
 // Parses CopyObject response.
 export function getCopyObjectTransformer() {
-  return getConcater(xmlParsers.parseCopyObject)
+  return getConcater(parseCopyObject)
 }
 
 // Parses listBuckets response.

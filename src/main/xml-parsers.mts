@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 import crc32 from 'buffer-crc32'
-import { XMLParser } from 'fast-xml-parser'
-import _ from 'lodash'
 
 import { isObject } from './asserts.mts'
 import * as errors from './errors.mts'
@@ -25,68 +23,33 @@ import {
   RETENTION_VALIDITY_UNITS,
   sanitizeETag,
   sanitizeObjectKey,
-  toArray
+  toArray,
 } from './helpers.mts'
 import { SelectResults } from './SelectResults.mts'
-// Parse XML and return information as Javascript types
-const fxp = new XMLParser()
-
-// parse error XML response
-export function parseError(xml: string, headerInfo) {
-  var xmlErr = {}
-  var xmlObj = fxp.parse(xml)
-  if (xmlObj.Error) {
-    xmlErr = xmlObj.Error
-  }
-
-  var e = new errors.S3Error() as unknown as Record<string, any>
-  Object.entries(xmlErr).forEach(([key, value]) => {
-    e[key.toLowerCase()] = value
-  })
-
-  Object.entries(headerInfo).forEach(([key, value]) => {
-    e[key] = value
-  })
-
-  return e
-}
-
-// parse XML response for copy object
-export function parseCopyObject(xml: string) {
-  var result = {
-    etag: '',
-    lastModified: '',
-  }
-
-  var xmlobj = parseXml(xml)
-  if (!xmlobj.CopyObjectResult) {
-    throw new errors.InvalidXMLError('Missing tag: "CopyObjectResult"')
-  }
-  xmlobj = xmlobj.CopyObjectResult
-  if (xmlobj.ETag) {
-    result.etag = xmlobj.ETag.replace(/^"/g, '')
-      .replace(/"$/g, '')
-      .replace(/^&quot;/g, '')
-      .replace(/&quot;$/g, '')
-      .replace(/^&#34;/g, '')
-      .replace(/&#34;$/g, '')
-  }
-  if (xmlobj.LastModified) {
-    result.lastModified = new Date(xmlobj.LastModified)
-  }
-
-  return result
-}
+import { UploadID } from './type.ts'
 
 // parse XML response for listing in-progress multipart uploads
 export function parseListMultipart(xml: string) {
-  var result = {
-    uploads: [],
-    prefixes: [],
+  let result = {
+    uploads: [] as {
+      key: string
+      uploadId: UploadID
+    }[],
+    prefixes: [] as { prefix: string }[],
     isTruncated: false,
+    nextKeyMarker: undefined,
+    nextUploadIdMarker: undefined,
   }
 
-  var xmlobj = parseXml(xml)
+  let xmlobj = parseXml(xml) as {
+    nextUploadIdMarker: undefined
+    Upload: any
+    NextUploadIdMarker: any
+    NextKeyMarker: any
+    IsTruncated: any
+    ListMultipartUploadsResult?: unknown
+    CommonPrefixes?: { Prefix: string }
+  }
 
   if (!xmlobj.ListMultipartUploadsResult) {
     throw new errors.InvalidXMLError('Missing tag: "ListMultipartUploadsResult"')
@@ -104,18 +67,18 @@ export function parseListMultipart(xml: string) {
 
   if (xmlobj.CommonPrefixes) {
     toArray(xmlobj.CommonPrefixes).forEach((prefix) => {
-      result.prefixes.push({ prefix: sanitizeObjectKey(toArray(prefix.Prefix)[0]) })
+      result.prefixes.push({ prefix: sanitizeObjectKey(toArray<string>(prefix.Prefix)[0]) })
     })
   }
 
   if (xmlobj.Upload) {
     toArray(xmlobj.Upload).forEach((upload) => {
-      var key = upload.Key
-      var uploadId = upload.UploadId
-      var initiator = { id: upload.Initiator.ID, displayName: upload.Initiator.DisplayName }
-      var owner = { id: upload.Owner.ID, displayName: upload.Owner.DisplayName }
-      var storageClass = upload.StorageClass
-      var initiated = new Date(upload.Initiated)
+      let key = upload.Key
+      let uploadId = upload.UploadId
+      let initiator = { id: upload.Initiator.ID, displayName: upload.Initiator.DisplayName }
+      let owner = { id: upload.Owner.ID, displayName: upload.Owner.DisplayName }
+      let storageClass = upload.StorageClass
+      let initiated = new Date(upload.Initiated)
       result.uploads.push({ key, uploadId, initiator, owner, storageClass, initiated })
     })
   }
@@ -124,8 +87,8 @@ export function parseListMultipart(xml: string) {
 
 // parse XML response to list all the owned buckets
 export function parseListBucket(xml: string) {
-  var result = []
-  var xmlobj = parseXml(xml)
+  let result = []
+  let xmlobj = parseXml(xml)
 
   if (!xmlobj.ListAllMyBucketsResult) {
     throw new errors.InvalidXMLError('Missing tag: "ListAllMyBucketsResult"')
@@ -135,8 +98,8 @@ export function parseListBucket(xml: string) {
   if (xmlobj.Buckets) {
     if (xmlobj.Buckets.Bucket) {
       toArray(xmlobj.Buckets.Bucket).forEach((bucket) => {
-        var name = bucket.Name
-        var creationDate = new Date(bucket.CreationDate)
+        let name = bucket.Name
+        let creationDate = new Date(bucket.CreationDate)
         result.push({ name, creationDate })
       })
     }
@@ -146,14 +109,14 @@ export function parseListBucket(xml: string) {
 
 // parse XML response for bucket notification
 export function parseBucketNotification(xml: string) {
-  var result = {
+  let result = {
     TopicConfiguration: [],
     QueueConfiguration: [],
     CloudFunctionConfiguration: [],
   }
   // Parse the events list
-  var genEvents = function (events) {
-    var result = []
+  let genEvents = function (events) {
+    let result = []
     if (events) {
       toArray(events).forEach((s3event) => {
         result.push(s3event)
@@ -162,16 +125,16 @@ export function parseBucketNotification(xml: string) {
     return result
   }
   // Parse all filter rules
-  var genFilterRules = function (filters) {
-    var result = []
+  let genFilterRules = function (filters) {
+    let result = []
     if (filters) {
       filters = toArray(filters)
       if (filters[0].S3Key) {
         filters[0].S3Key = toArray(filters[0].S3Key)
         if (filters[0].S3Key[0].FilterRule) {
           toArray(filters[0].S3Key[0].FilterRule).forEach((rule) => {
-            var Name = toArray(rule.Name)[0]
-            var Value = toArray(rule.Value)[0]
+            let Name = toArray(rule.Name)[0]
+            let Value = toArray(rule.Value)[0]
             result.push({ Name, Value })
           })
         }
@@ -180,36 +143,36 @@ export function parseBucketNotification(xml: string) {
     return result
   }
 
-  var xmlobj = parseXml(xml)
+  let xmlobj = parseXml(xml)
   xmlobj = xmlobj.NotificationConfiguration
 
   // Parse all topic configurations in the xml
   if (xmlobj.TopicConfiguration) {
     toArray(xmlobj.TopicConfiguration).forEach((config) => {
-      var Id = toArray(config.Id)[0]
-      var Topic = toArray(config.Topic)[0]
-      var Event = genEvents(config.Event)
-      var Filter = genFilterRules(config.Filter)
+      let Id = toArray(config.Id)[0]
+      let Topic = toArray(config.Topic)[0]
+      let Event = genEvents(config.Event)
+      let Filter = genFilterRules(config.Filter)
       result.TopicConfiguration.push({ Id, Topic, Event, Filter })
     })
   }
   // Parse all topic configurations in the xml
   if (xmlobj.QueueConfiguration) {
     toArray(xmlobj.QueueConfiguration).forEach((config) => {
-      var Id = toArray(config.Id)[0]
-      var Queue = toArray(config.Queue)[0]
-      var Event = genEvents(config.Event)
-      var Filter = genFilterRules(config.Filter)
+      let Id = toArray(config.Id)[0]
+      let Queue = toArray(config.Queue)[0]
+      let Event = genEvents(config.Event)
+      let Filter = genFilterRules(config.Filter)
       result.QueueConfiguration.push({ Id, Queue, Event, Filter })
     })
   }
   // Parse all QueueConfiguration arrays
   if (xmlobj.CloudFunctionConfiguration) {
     toArray(xmlobj.CloudFunctionConfiguration).forEach((config) => {
-      var Id = toArray(config.Id)[0]
-      var CloudFunction = toArray(config.CloudFunction)[0]
-      var Event = genEvents(config.Event)
-      var Filter = genFilterRules(config.Filter)
+      let Id = toArray(config.Id)[0]
+      let CloudFunction = toArray(config.CloudFunction)[0]
+      let Event = genEvents(config.Event)
+      let Filter = genFilterRules(config.Filter)
       result.CloudFunctionConfiguration.push({ Id, CloudFunction, Event, Filter })
     })
   }
@@ -225,8 +188,8 @@ export function parseBucketRegion(xml: string) {
 
 // parse XML response for list parts of an in progress multipart upload
 export function parseListParts(xml: string) {
-  var xmlobj = parseXml(xml)
-  var result = {
+  let xmlobj = parseXml(xml)
+  let result = {
     isTruncated: false,
     parts: [],
     marker: undefined,
@@ -243,9 +206,9 @@ export function parseListParts(xml: string) {
   }
   if (xmlobj.Part) {
     toArray(xmlobj.Part).forEach((p) => {
-      var part = +toArray(p.PartNumber)[0]
-      var lastModified = new Date(p.LastModified)
-      var etag = p.ETag.replace(/^"/g, '')
+      let part = +toArray(p.PartNumber)[0]
+      let lastModified = new Date(p.LastModified)
+      let etag = p.ETag.replace(/^"/g, '')
         .replace(/"$/g, '')
         .replace(/^&quot;/g, '')
         .replace(/&quot;$/g, '')
@@ -259,7 +222,7 @@ export function parseListParts(xml: string) {
 
 // parse XML response when a new multipart upload is initiated
 export function parseInitiateMultipart(xml: string) {
-  var xmlobj = parseXml(xml)
+  let xmlobj = parseXml(xml)
 
   if (!xmlobj.InitiateMultipartUploadResult) {
     throw new errors.InvalidXMLError('Missing tag: "InitiateMultipartUploadResult"')
@@ -274,12 +237,12 @@ export function parseInitiateMultipart(xml: string) {
 
 // parse XML response when a multipart upload is completed
 export function parseCompleteMultipart(xml: string) {
-  var xmlobj = parseXml(xml).CompleteMultipartUploadResult
+  let xmlobj = parseXml(xml).CompleteMultipartUploadResult
   if (xmlobj.Location) {
-    var location = toArray(xmlobj.Location)[0]
-    var bucket = toArray(xmlobj.Bucket)[0]
-    var key = xmlobj.Key
-    var etag = xmlobj.ETag.replace(/^"/g, '')
+    let location = toArray(xmlobj.Location)[0]
+    let bucket = toArray(xmlobj.Bucket)[0]
+    let key = xmlobj.Key
+    let etag = xmlobj.ETag.replace(/^"/g, '')
       .replace(/"$/g, '')
       .replace(/^&quot;/g, '')
       .replace(/&quot;$/g, '')
@@ -290,8 +253,8 @@ export function parseCompleteMultipart(xml: string) {
   }
   // Complete Multipart can return XML Error after a 200 OK response
   if (xmlobj.Code && xmlobj.Message) {
-    var errCode = toArray(xmlobj.Code)[0]
-    var errMessage = toArray(xmlobj.Message)[0]
+    let errCode = toArray(xmlobj.Code)[0]
+    let errMessage = toArray(xmlobj.Message)[0]
     return { errCode, errMessage }
   }
 }
@@ -320,7 +283,7 @@ const formatObjInfo = (content, opts = {}) => {
 
 // parse XML response for list objects in a bucket
 export function parseListObjects(xml: string) {
-  var result = {
+  let result = {
     objects: [],
     isTruncated: false,
   }
@@ -393,11 +356,11 @@ export function parseListObjects(xml: string) {
 
 // parse XML response for list objects v2 in a bucket
 export function parseListObjectsV2(xml: string) {
-  var result = {
+  let result = {
     objects: [],
     isTruncated: false,
   }
-  var xmlobj = parseXml(xml)
+  let xmlobj = parseXml(xml)
   if (!xmlobj.ListBucketResult) {
     throw new errors.InvalidXMLError('Missing tag: "ListBucketResult"')
   }
@@ -410,10 +373,10 @@ export function parseListObjectsV2(xml: string) {
   }
   if (xmlobj.Contents) {
     toArray(xmlobj.Contents).forEach((content) => {
-      var name = sanitizeObjectKey(toArray(content.Key)[0])
-      var lastModified = new Date(content.LastModified)
-      var etag = sanitizeETag(content.ETag)
-      var size = content.Size
+      let name = sanitizeObjectKey(toArray(content.Key)[0])
+      let lastModified = new Date(content.LastModified)
+      let etag = sanitizeETag(content.ETag)
+      let size = content.Size
       result.objects.push({ name, lastModified, etag, size })
     })
   }
@@ -427,11 +390,11 @@ export function parseListObjectsV2(xml: string) {
 
 // parse XML response for list objects v2 with metadata in a bucket
 export function parseListObjectsV2WithMetadata(xml: string) {
-  var result = {
+  let result = {
     objects: [],
     isTruncated: false,
   }
-  var xmlobj = parseXml(xml)
+  let xmlobj = parseXml(xml)
   if (!xmlobj.ListBucketResult) {
     throw new errors.InvalidXMLError('Missing tag: "ListBucketResult"')
   }
@@ -445,11 +408,11 @@ export function parseListObjectsV2WithMetadata(xml: string) {
 
   if (xmlobj.Contents) {
     toArray(xmlobj.Contents).forEach((content) => {
-      var name = sanitizeObjectKey(content.Key)
-      var lastModified = new Date(content.LastModified)
-      var etag = sanitizeETag(content.ETag)
-      var size = content.Size
-      var metadata
+      let name = sanitizeObjectKey(content.Key)
+      let lastModified = new Date(content.LastModified)
+      let etag = sanitizeETag(content.ETag)
+      let size = content.Size
+      let metadata
       if (content.UserMetadata != null) {
         metadata = toArray(content.UserMetadata)[0]
       } else {
@@ -468,7 +431,7 @@ export function parseListObjectsV2WithMetadata(xml: string) {
 }
 
 export function parseBucketVersioningConfig(xml: string) {
-  var xmlObj = parseXml(xml)
+  let xmlObj = parseXml(xml)
   return xmlObj.VersioningConfiguration
 }
 
@@ -665,33 +628,35 @@ export function parseSelectObjectContentResponse(res) {
             break
           }
 
-          case 'Progress': {
-            switch (contentType) {
-              case 'text/xml': {
-                const progressData = payloadStream.read(payLoadLength)
-                selectResults.setProgress(progressData.toString())
-                break
-              }
-              default: {
-                const errorMessage = `Unexpected content-type ${contentType} sent for event-type Progress`
-                throw new Error(errorMessage)
+          case 'Progress':
+            {
+              switch (contentType) {
+                case 'text/xml': {
+                  const progressData = payloadStream.read(payLoadLength)
+                  selectResults.setProgress(progressData.toString())
+                  break
+                }
+                default: {
+                  const errorMessage = `Unexpected content-type ${contentType} sent for event-type Progress`
+                  throw new Error(errorMessage)
+                }
               }
             }
-          }
             break
-          case 'Stats': {
-            switch (contentType) {
-              case 'text/xml': {
-                const statsData = payloadStream.read(payLoadLength)
-                selectResults.setStats(statsData.toString())
-                break
-              }
-              default: {
-                const errorMessage = `Unexpected content-type ${contentType} sent for event-type Stats`
-                throw new Error(errorMessage)
+          case 'Stats':
+            {
+              switch (contentType) {
+                case 'text/xml': {
+                  const statsData = payloadStream.read(payLoadLength)
+                  selectResults.setStats(statsData.toString())
+                  break
+                }
+                default: {
+                  const errorMessage = `Unexpected content-type ${contentType} sent for event-type Stats`
+                  throw new Error(errorMessage)
+                }
               }
             }
-          }
             break
           default: {
             // Continuation message: Not sure if it is supported. did not find a reference or any message in response.

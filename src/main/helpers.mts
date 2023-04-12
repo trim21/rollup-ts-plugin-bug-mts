@@ -421,14 +421,14 @@ export const toSha256 = (payload: Crypto.BinaryLike) => {
 // toArray returns a single element array with param being the element,
 // if param is just a string, and returns 'param' back if it is an array
 // So, it makes sure param is always an array
-export const toArray = (param: unknown): Array<unknown> => {
+export function toArray<T = unknown>(param: T | T[]): Array<T> {
   if (!Array.isArray(param)) {
-    return [param]
+    return [param] as T[]
   }
   return param
 }
 
-export const sanitizeObjectKey = (objectName: string): string => {
+export function sanitizeObjectKey(objectName: string): string {
   // + symbol characters are not decoded as spaces in JS. so replace them first and decode to get the correct result.
   let asStrName = (objectName ? objectName.toString() : '').replace(/\+/g, ' ')
   return decodeURIComponent(asStrName)

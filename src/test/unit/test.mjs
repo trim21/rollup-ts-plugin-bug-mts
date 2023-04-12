@@ -29,7 +29,7 @@ import {
   isValidIP,
   partsRequired,
 } from '../../main/helpers'
-import { makeDateLong, makeDateShort } from '../../main/helpers-typed'
+import { makeDateLong, makeDateShort } from '../../main/helpers'
 import * as Minio from '../../main/minio'
 
 const Package = { version: 'development' }

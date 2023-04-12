@@ -64,7 +64,7 @@ import {
   sanitizeETag,
   uriEscape,
   uriResourceEscape,
-} from './helpers-typed'
+} from './helpers'
 import { NotificationConfig, NotificationPoller } from './notification'
 import ObjectUploader from './object-uploader'
 import { promisify } from './promisify'
@@ -77,7 +77,7 @@ export * from './helpers'
 export * from './notification'
 export { DEFAULT_REGION }
 export { removeDirAndFiles } from '../test/utils'
-export * from './helpers-typed'
+export * from './helpers'
 export { SelectResults } from './SelectResults'
 
 // will be replaced by rollup plugin
@@ -3984,11 +3984,11 @@ export class PostPolicy {
     })
   }
 }
-export { sanitizeETag } from './helpers-typed.mjs'
-export { pipesetup } from './helpers-typed.mjs'
-export { readableStream } from './helpers-typed.mjs'
-export { makeDateShort } from './helpers-typed.mjs'
-export { makeDateLong } from './helpers-typed.mjs'
-export { uriResourceEscape } from './helpers-typed.mjs'
-export { uriEscape } from './helpers-typed.mjs'
-export { getScope } from './helpers-typed.mjs'
+export { sanitizeETag } from './helpers.mjs'
+export { pipesetup } from './helpers.mjs'
+export { readableStream } from './helpers.mjs'
+export { makeDateShort } from './helpers.mjs'
+export { makeDateLong } from './helpers.mjs'
+export { uriResourceEscape } from './helpers.mjs'
+export { uriEscape } from './helpers.mjs'
+export { getScope } from './helpers.mjs'

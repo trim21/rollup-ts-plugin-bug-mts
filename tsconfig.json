@@ -9,7 +9,11 @@
     "allowJs": true,
     "esModuleInterop": true,
     "allowImportingTsExtensions": true,
-    "noEmit": true
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true,
+    "sourceMap": true,
+    "outDir": "./dist/tsc/"
   },
   "include": ["./src/main/*"]
 }

@@ -24,6 +24,15 @@
     },
     "./package.json": "./package.json"
   },
+  "files": [
+    "package.json",
+    "./dist/",
+    "./src/",
+    "LICENSE",
+    "README.md",
+    "README_zh_CN.md",
+    "MAINTAINERS.md"
+  ],
   "prettier": {
     "printWidth": 120,
     "singleQuote": true,

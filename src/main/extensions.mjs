@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import Stream from 'stream'
+import * as stream from 'node:stream'
 
 import { isBoolean, isNumber, isString } from './asserts.mts'
 import * as errors from './errors.mts'
@@ -73,7 +73,7 @@ export default class extensions {
     var continuationToken = ''
     var objects = []
     var ended = false
-    var readStream = Stream.Readable({ objectMode: true })
+    var readStream = new stream.Readable({ objectMode: true })
     readStream._read = () => {
       // push one object per _read()
       if (objects.length) {

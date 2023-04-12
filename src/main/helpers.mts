@@ -290,7 +290,7 @@ export function pipesetup(...streams: any[]) {
 }
 
 // return a Readable stream that emits data
-export function readableStream(data: any) {
+export function readableStream(data: any): stream.Readable {
   let s = new stream.Readable()
   s._read = () => {}
   s.push(data)

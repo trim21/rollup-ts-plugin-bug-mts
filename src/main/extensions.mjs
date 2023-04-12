@@ -16,10 +16,10 @@
 
 import Stream from 'stream'
 
-import { isBoolean, isNumber, isString } from './asserts'
-import * as errors from './errors'
-import { isValidBucketName, isValidPrefix, pipesetup, uriEscape } from './helpers'
-import * as transformers from './transformers'
+import { isBoolean, isNumber, isString } from './asserts.mts'
+import * as errors from './errors.mts'
+import { isValidBucketName, isValidPrefix, pipesetup, uriEscape } from './helpers.mts'
+import * as transformers from './transformers.mjs'
 
 export default class extensions {
   constructor(client) {

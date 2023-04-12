@@ -19,9 +19,9 @@ import JSONParser from 'json-stream'
 import _ from 'lodash'
 import Through2 from 'through2'
 
-import { isFunction } from './asserts.mjs'
-import * as errors from './errors.mjs'
-import * as xmlParsers from './xml-parsers/'
+import { isFunction } from './asserts.mts'
+import * as errors from './errors.mts'
+import * as xmlParsers from './xml-parsers/index.mts'
 
 // getConcater returns a stream that concatenates the input and emits
 // the concatenated output when 'end' has reached. If an optional

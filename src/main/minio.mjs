@@ -28,10 +28,19 @@ import { TextEncoder } from 'web-encoding'
 import Xml from 'xml'
 import xml2js from 'xml2js'
 
-import { isArray, isBoolean, isFunction, isNumber, isObject, isReadableStream, isString, isValidDate } from './asserts'
-import CredentialProvider from './CredentialProvider'
-import * as errors from './errors'
-import extensions from './extensions'
+import {
+  isArray,
+  isBoolean,
+  isFunction,
+  isNumber,
+  isObject,
+  isReadableStream,
+  isString,
+  isValidDate,
+} from './asserts.mts'
+import CredentialProvider from './CredentialProvider.mts'
+import * as errors from './errors.mts'
+import extensions from './extensions.mjs'
 import {
   calculateEvenSplits,
   CopyDestinationOptions,
@@ -53,7 +62,7 @@ import {
   RETENTION_VALIDITY_UNITS,
   toMd5,
   toSha256,
-} from './helpers'
+} from './helpers.mts'
 import {
   getScope,
   getSourceVersionId,
@@ -64,21 +73,21 @@ import {
   sanitizeETag,
   uriEscape,
   uriResourceEscape,
-} from './helpers'
-import { NotificationConfig, NotificationPoller } from './notification'
-import ObjectUploader from './object-uploader'
-import { promisify } from './promisify'
-import { DEFAULT_REGION, getS3Endpoint } from './s3-endpoints'
-import { postPresignSignatureV4, presignSignatureV4, signV4 } from './signing'
-import * as transformers from './transformers'
-import { parseSelectObjectContentResponse } from './xml-parsers/parse-select-object-content-response.mjs'
+} from './helpers.mts'
+import { NotificationConfig, NotificationPoller } from './notification.mjs'
+import ObjectUploader from './object-uploader.mts'
+import { promisify } from './promisify.mjs'
+import { DEFAULT_REGION, getS3Endpoint } from './s3-endpoints.mts'
+import { postPresignSignatureV4, presignSignatureV4, signV4 } from './signing.mts'
+import * as transformers from './transformers.mjs'
+import { parseSelectObjectContentResponse } from './xml-parsers/parse-select-object-content-response.mts'
 
-export * from './helpers'
-export * from './notification'
+export * from './helpers.mts'
+export * from './notification.mjs'
 export { DEFAULT_REGION }
-export { removeDirAndFiles } from '../test/utils'
-export * from './helpers'
-export { SelectResults } from './SelectResults'
+export { removeDirAndFiles } from '../test/utils.mjs'
+export * from './helpers.mts'
+export { SelectResults } from './SelectResults.mts'
 
 // will be replaced by rollup plugin
 const version = process.env.MINIO_JS_PACKAGE_VERSION || 'development'
@@ -3745,9 +3754,9 @@ export class Client {
       throw new TypeError('valid select configuration is required')
     }
 
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
+    // if (!isFunction(cb)) {
+    //   throw new TypeError('callback should be of type "function"')
+    // }
 
     const method = 'POST'
     let query = `select`
@@ -3784,22 +3793,48 @@ export class Client {
     })
     const payload = builder.buildObject(config)
 
-    this.makeRequest({ method, bucketName, objectName, query }, payload, [200], '', true, (e, response) => {
-      if (e) {
-        return cb(e)
-      }
+    return asCallback(
+      new Promise((resolve, reject) => {
+        this.makeRequest({ method, bucketName, objectName, query }, payload, [200], '', true, async (e, response) => {
+          if (e) {
+            return reject(e)
+          }
 
-      let selectResult
-      pipesetup(response, transformers.selectObjectContentTransformer())
-        .on('data', (data) => {
-          selectResult = parseSelectObjectContentResponse(data)
+          const d = []
+          for await (const data of response) {
+            d.push(data)
+          }
+
+          const res = Buffer.concat(d)
+
+          let selectResult
+          try {
+            selectResult = parseSelectObjectContentResponse(res)
+          } catch (e) {
+            return reject(e)
+          }
+
+          resolve(selectResult)
         })
-        .on('error', cb)
-        .on('end', () => {
-          cb(null, selectResult)
-        })
-    })
+      }),
+      cb
+    )
   }
+}
+
+function asCallback(promise, cb) {
+  if (cb === undefined) {
+    return promise
+  }
+
+  promise.then(
+    (result) => {
+      cb(null, result)
+    },
+    (err) => {
+      cb(err)
+    }
+  )
 }
 
 // Promisify various public-facing APIs on the Client module.
@@ -3852,7 +3887,8 @@ Client.prototype.removeBucketReplication = promisify(Client.prototype.removeBuck
 Client.prototype.setObjectLegalHold = promisify(Client.prototype.setObjectLegalHold)
 Client.prototype.getObjectLegalHold = promisify(Client.prototype.getObjectLegalHold)
 Client.prototype.composeObject = promisify(Client.prototype.composeObject)
-Client.prototype.selectObjectContent = promisify(Client.prototype.selectObjectContent)
+
+// Client.prototype.selectObjectContent = promisify(Client.prototype.selectObjectContent)
 
 export class CopyConditions {
   constructor() {
@@ -3984,11 +4020,12 @@ export class PostPolicy {
     })
   }
 }
-export { sanitizeETag } from './helpers.mjs'
-export { pipesetup } from './helpers.mjs'
-export { readableStream } from './helpers.mjs'
-export { makeDateShort } from './helpers.mjs'
-export { makeDateLong } from './helpers.mjs'
-export { uriResourceEscape } from './helpers.mjs'
-export { uriEscape } from './helpers.mjs'
-export { getScope } from './helpers.mjs'
+
+export { sanitizeETag } from './helpers.mts'
+export { pipesetup } from './helpers.mts'
+export { readableStream } from './helpers.mts'
+export { makeDateShort } from './helpers.mts'
+export { makeDateLong } from './helpers.mts'
+export { uriResourceEscape } from './helpers.mts'
+export { uriEscape } from './helpers.mts'
+export { getScope } from './helpers.mts'

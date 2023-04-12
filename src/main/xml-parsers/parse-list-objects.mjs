@@ -24,7 +24,7 @@ const formatObjInfo = (content, opts = {}) => {
 }
 
 // parse XML response for list objects in a bucket
-export function parseListObjects(xml: string) {
+export function parseListObjects(xml) {
   let result = {
     objects: [],
     isTruncated: false,

@@ -2,7 +2,7 @@
 import * as errors from '../errors.mts'
 import { parseXml, sanitizeETag, sanitizeObjectKey, toArray } from '../helpers.mts'
 
-export function parseListObjectsV2WithMetadata(xml: string) {
+export function parseListObjectsV2WithMetadata(xml) {
   let result = {
     objects: [],
     isTruncated: false,

@@ -8,6 +8,10 @@ export function parseListMultipart(xml: string) {
     uploads: [] as {
       key: string
       uploadId: UploadID
+      initiator: unknown
+      owner: unknown
+      storageClass: unknown
+      initiated: unknown
     }[],
     prefixes: [] as { prefix: string }[],
     isTruncated: false,
@@ -15,15 +19,7 @@ export function parseListMultipart(xml: string) {
     nextUploadIdMarker: undefined,
   }
 
-  let xmlobj = parseXml(xml) as {
-    nextUploadIdMarker: undefined
-    Upload: any
-    NextUploadIdMarker: any
-    NextKeyMarker: any
-    IsTruncated: any
-    ListMultipartUploadsResult?: unknown
-    CommonPrefixes?: { Prefix: string }
-  }
+  let xmlobj = parseXml(xml)
 
   if (!xmlobj.ListMultipartUploadsResult) {
     throw new errors.InvalidXMLError('Missing tag: "ListMultipartUploadsResult"')

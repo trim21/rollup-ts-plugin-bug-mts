@@ -2,7 +2,7 @@
 import * as errors from '../errors.mts'
 import { parseXml, toArray } from '../helpers.mts'
 
-export function parseListParts(xml: string) {
+export function parseListParts(xml) {
   let xmlobj = parseXml(xml)
   let result = {
     isTruncated: false,

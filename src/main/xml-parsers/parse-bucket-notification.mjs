@@ -1,7 +1,7 @@
 // parse XML response for bucket notification
 import { parseXml, toArray } from '../helpers.mts'
 
-export function parseBucketNotification(xml: string) {
+export function parseBucketNotification(xml) {
   let result = {
     TopicConfiguration: [],
     QueueConfiguration: [],

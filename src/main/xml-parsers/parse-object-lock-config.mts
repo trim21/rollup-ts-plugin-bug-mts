@@ -1,9 +1,15 @@
 import { parseXml, RETENTION_VALIDITY_UNITS } from '../helpers.mts'
-import type { LockConfig } from "../minio.d.ts"
 
-export function parseObjectLockConfig(xml: string): any | undefined {
+type R = {
+  mode?: string
+  objectLockEnabled?: 'Enabled'
+  unit?: 'Years' | 'Days'
+  validity?: number
+}
+
+export function parseObjectLockConfig(xml: string): R | undefined {
   const xmlObj = parseXml(xml)
-  let lockConfigResult: LockConfig = {}
+  let lockConfigResult: R = {}
   if (xmlObj.ObjectLockConfiguration) {
     lockConfigResult = {
       objectLockEnabled: xmlObj.ObjectLockConfiguration.ObjectLockEnabled,

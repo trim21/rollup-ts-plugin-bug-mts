@@ -29,13 +29,13 @@ import superagent from 'superagent'
 import url from 'url'
 import * as uuid from 'uuid'
 
+import { isArray } from '../../main/asserts.mjs'
 import AssumeRoleProvider from '../../main/AssumeRoleProvider'
 import {
   CopyDestinationOptions,
   CopySourceOptions,
   DEFAULT_REGION,
   getVersionId,
-  isArray,
   removeDirAndFiles,
 } from '../../main/helpers'
 import * as minio from '../../main/minio'

@@ -4,19 +4,10 @@ import { EventEmitter } from 'events'
 import { RequestOptions } from 'https'
 import { Readable as ReadableStream } from 'stream'
 
+import { Region } from './s3-endpoints.mts'
+
 // Exports only from typings
-export type Region =
-  | 'us-east-1'
-  | 'us-west-1'
-  | 'us-west-2'
-  | 'eu-west-1'
-  | 'eu-central-1'
-  | 'ap-southeast-1'
-  | 'ap-northeast-1'
-  | 'ap-southeast-2'
-  | 'sa-east-1'
-  | 'cn-north-1'
-  | string
+export { Region }
 export type NotificationEvent =
   | 's3:ObjectCreated:*'
   | 's3:ObjectCreated:Put'

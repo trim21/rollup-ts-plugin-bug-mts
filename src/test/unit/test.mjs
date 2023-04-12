@@ -20,11 +20,11 @@ import { assert } from 'chai'
 import Nock from 'nock'
 import Stream from 'stream'
 
+import { isArray } from '../../main/asserts.mjs'
 import {
   calculateEvenSplits,
   CopyDestinationOptions,
   CopySourceOptions,
-  isArray,
   isValidEndpoint,
   isValidIP,
   makeDateLong,

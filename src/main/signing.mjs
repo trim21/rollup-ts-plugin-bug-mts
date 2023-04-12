@@ -17,8 +17,9 @@
 import Crypto from 'crypto'
 import _ from 'lodash'
 
+import { isArray, isNumber, isObject, isString } from './asserts'
 import * as errors from './errors'
-import { getScope, isArray, isNumber, isObject, isString, makeDateLong, makeDateShort, uriEscape } from './helpers'
+import { getScope, makeDateLong, makeDateShort, uriEscape } from './helpers'
 
 const signV4Algorithm = 'AWS4-HMAC-SHA256'
 
@@ -144,8 +145,8 @@ function getSigningKey(date, region, secretKey, serviceName = 's3') {
   }
   const dateLine = makeDateShort(date)
   let hmac1 = Crypto.createHmac('sha256', 'AWS4' + secretKey)
-      .update(dateLine)
-      .digest(),
+    .update(dateLine)
+    .digest(),
     hmac2 = Crypto.createHmac('sha256', hmac1).update(region).digest(),
     hmac3 = Crypto.createHmac('sha256', hmac2).update(serviceName).digest()
   return Crypto.createHmac('sha256', hmac3).update('aws4_request').digest()

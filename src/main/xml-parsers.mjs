@@ -17,9 +17,9 @@ import crc32 from 'buffer-crc32'
 import { XMLParser } from 'fast-xml-parser'
 import _ from 'lodash'
 
+import { isObject } from './asserts'
 import * as errors from './errors'
 import {
-  isObject,
   parseXml,
   readableStream,
   RETENTION_VALIDITY_UNITS,

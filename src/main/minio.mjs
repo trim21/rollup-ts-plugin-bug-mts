@@ -28,6 +28,16 @@ import { TextEncoder } from 'web-encoding'
 import Xml from 'xml'
 import xml2js from 'xml2js'
 
+import {
+  isArray,
+  isBoolean,
+  isFunction,
+  isNumber,
+  isObject,
+  isReadableStream,
+  isString,
+  isValidDate,
+} from './asserts.mjs'
 import CredentialProvider from './CredentialProvider'
 import * as errors from './errors'
 import extensions from './extensions'
@@ -42,15 +52,7 @@ import {
   getVersionId,
   insertContentType,
   isAmazonEndpoint,
-  isArray,
-  isBoolean,
-  isFunction,
-  isNumber,
-  isObject,
-  isReadableStream,
-  isString,
   isValidBucketName,
-  isValidDate,
   isValidEndpoint,
   isValidObjectName,
   isValidPort,
@@ -399,7 +401,7 @@ export class Client {
       return this.partSize
     }
     var partSize = this.partSize
-    for (;;) {
+    for (; ;) {
       // while(true) {...} throws linting error.
       // If partSize is big enough to accomodate the object size, then use it.
       if (partSize * 10000 > size) {
@@ -585,7 +587,7 @@ export class Client {
         }
         // We drain the socket so that the connection gets closed. Note that this
         // is not expensive as the socket will not have any data.
-        response.on('data', () => {})
+        response.on('data', () => { })
         cb(null)
       })
       let pipe = pipesetup(stream, req)
@@ -1845,7 +1847,7 @@ export class Client {
 
       // We drain the socket so that the connection gets closed. Note that this
       // is not expensive as the socket will not have any data.
-      response.on('data', () => {})
+      response.on('data', () => { })
 
       const result = {
         size: +response.headers['content-length'],
@@ -2569,7 +2571,7 @@ export class Client {
             versionId: getVersionId(response.headers),
           }
           // Ignore the 'data' event so that the stream closes. (nodejs stream requirement)
-          response.on('data', () => {})
+          response.on('data', () => { })
           cb(null, result)
         }
       )
@@ -3986,3 +3988,11 @@ export class PostPolicy {
     })
   }
 }
+export { isValidDate } from './asserts.mjs'
+export { isArray } from './asserts.mjs'
+export { isBoolean } from './asserts.mjs'
+export { isReadableStream } from './asserts.mjs'
+export { isObject } from './asserts.mjs'
+export { isString } from './asserts.mjs'
+export { isFunction } from './asserts.mjs'
+export { isNumber } from './asserts.mjs'

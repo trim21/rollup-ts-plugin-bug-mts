@@ -15,5 +15,5 @@
     "sourceMap": true,
     "outDir": "./dist/tsc/"
   },
-  "include": ["./src/main/*"]
+  "include": ["./src/main/**/*"]
 }

@@ -19,11 +19,9 @@ import JSONParser from 'json-stream'
 import _ from 'lodash'
 import Through2 from 'through2'
 
-import { isFunction } from '../asserts'
-import * as errors from '../errors'
-import { parseError } from './parse-error.mjs'
-import * as xmlParsers from '../xml-parsers'
-import { parseCopyObject } from "./parse-copy-object.mjs"
+import { isFunction } from './asserts.mjs'
+import * as errors from './errors.mjs'
+import * as xmlParsers from './xml-parsers/'
 
 // getConcater returns a stream that concatenates the input and emits
 // the concatenated output when 'end' has reached. If an optional
@@ -119,7 +117,7 @@ export function getErrorTransformer(response) {
     }
     let e
     try {
-      e = parseError(xmlString, headerInfo)
+      e = xmlParsers.parseError(xmlString, headerInfo)
     } catch (ex) {
       return getError()
     }
@@ -162,7 +160,7 @@ export function getHashSummer(enableSHA256) {
 
 // Parses CopyObject response.
 export function getCopyObjectTransformer() {
-  return getConcater(parseCopyObject)
+  return getConcater(xmlParsers.parseCopyObject)
 }
 
 // Parses listBuckets response.
@@ -240,6 +238,7 @@ export function objectLockTransformer() {
 export function objectRetentionTransformer() {
   return getConcater(xmlParsers.parseObjectRetentionConfig)
 }
+
 export function bucketEncryptionTransformer() {
   return getConcater(xmlParsers.parseBucketEncryptionConfig)
 }
@@ -255,6 +254,7 @@ export function objectLegalHoldTransformer() {
 export function uploadPartTransformer() {
   return getConcater(xmlParsers.uploadPartParser)
 }
+
 export function selectObjectContentTransformer() {
   return getConcater()
 }

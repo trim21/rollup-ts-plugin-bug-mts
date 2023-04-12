@@ -1,6 +1,6 @@
 // parse XML response for copy object
-import { parseXml } from "../helpers.mts";
-import * as errors from "../errors.mts";
+import * as errors from '../errors.mts'
+import { parseXml } from '../helpers.mts'
 
 export function parseCopyObject(xml: string) {
   let result: { etag: string; lastModified: string | Date } = {

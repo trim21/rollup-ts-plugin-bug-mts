@@ -71,7 +71,7 @@ import { promisify } from './promisify'
 import { DEFAULT_REGION, getS3Endpoint } from './s3-endpoints'
 import { postPresignSignatureV4, presignSignatureV4, signV4 } from './signing'
 import * as transformers from './transformers'
-import { parseSelectObjectContentResponse } from './xml-parsers'
+import { parseSelectObjectContentResponse } from './xml-parsers/parse-select-object-content-response.mjs'
 
 export * from './helpers'
 export * from './notification'

@@ -28,6 +28,7 @@ import { TextEncoder } from 'web-encoding'
 import Xml from 'xml'
 import xml2js from 'xml2js'
 
+import { asCallback } from './asCallback.mts'
 import {
   isArray,
   isBoolean,
@@ -38,6 +39,7 @@ import {
   isString,
   isValidDate,
 } from './asserts.mts'
+import { CopyConditions } from './copyConditions.mjs'
 import CredentialProvider from './CredentialProvider.mts'
 import * as errors from './errors.mts'
 import extensions from './extensions.mjs'
@@ -46,6 +48,9 @@ import {
   CopyDestinationOptions,
   CopySourceOptions,
   extractMetadata,
+  getScope,
+  getSourceVersionId,
+  getVersionId,
   insertContentType,
   isAmazonEndpoint,
   isValidBucketName,
@@ -55,31 +60,28 @@ import {
   isValidPrefix,
   isVirtualHostStyle,
   LEGAL_HOLD_STATUS,
+  makeDateLong,
   PART_CONSTRAINTS,
   partsRequired,
+  pipesetup,
   prependXAMZMeta,
+  readableStream,
   RETENTION_MODES,
   RETENTION_VALIDITY_UNITS,
+  sanitizeETag,
   toMd5,
   toSha256,
-} from './helpers.mts'
-import {
-  getScope,
-  getSourceVersionId,
-  getVersionId,
-  makeDateLong,
-  pipesetup,
-  readableStream,
-  sanitizeETag,
   uriEscape,
   uriResourceEscape,
 } from './helpers.mts'
 import { NotificationConfig, NotificationPoller } from './notification.mjs'
 import ObjectUploader from './object-uploader.mts'
+import { PostPolicy } from './postPolicy.mjs'
 import { promisify } from './promisify.mjs'
 import { DEFAULT_REGION, getS3Endpoint } from './s3-endpoints.mts'
 import { postPresignSignatureV4, presignSignatureV4, signV4 } from './signing.mts'
 import * as transformers from './transformers.mjs'
+import * as xmlParsers from './xml-parsers/index.mts'
 import { parseSelectObjectContentResponse } from './xml-parsers/parse-select-object-content-response.mts'
 
 export * from './helpers.mts'
@@ -88,6 +90,7 @@ export { DEFAULT_REGION }
 export { removeDirAndFiles } from '../test/utils.mjs'
 export * from './helpers.mts'
 export { SelectResults } from './SelectResults.mts'
+export { CopyConditions, PostPolicy }
 
 // will be replaced by rollup plugin
 const version = process.env.MINIO_JS_PACKAGE_VERSION || 'development'
@@ -788,21 +791,28 @@ export class Client {
 
   // * `bucket.creationDate` _Date_: date when bucket was created
   listBuckets(cb) {
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-    var method = 'GET'
-    this.makeRequest({ method }, '', [200], DEFAULT_REGION, true, (e, response) => {
-      if (e) {
-        return cb(e)
-      }
-      var transformer = transformers.getListBucketTransformer()
-      var buckets
-      pipesetup(response, transformer)
-        .on('data', (result) => (buckets = result))
-        .on('error', (e) => cb(e))
-        .on('end', () => cb(null, buckets))
-    })
+    return asCallback(
+      new Promise((resolve, reject) => {
+        this.makeRequest({ method: 'GET' }, '', [200], DEFAULT_REGION, true, async (e, response) => {
+          if (e) {
+            return reject(e)
+          }
+
+          try {
+            const data = []
+            for await (const buf of response) {
+              data.push(buf)
+            }
+
+            const res = Buffer.concat(data)
+            resolve(xmlParsers.parseListBucket(res.toString()))
+          } catch (e) {
+            reject(e)
+          }
+        })
+      }),
+      cb
+    )
   }
 
   // To check if a bucket already exists.
@@ -1789,7 +1799,7 @@ export class Client {
     var continuationToken = ''
     var objects = []
     var ended = false
-    var readStream = Stream.Readable({ objectMode: true })
+    var readStream = new Stream.Readable({ objectMode: true })
     readStream._read = () => {
       // push one object per _read()
       if (objects.length) {
@@ -3822,24 +3832,8 @@ export class Client {
   }
 }
 
-function asCallback(promise, cb) {
-  if (cb === undefined) {
-    return promise
-  }
-
-  promise.then(
-    (result) => {
-      cb(null, result)
-    },
-    (err) => {
-      cb(err)
-    }
-  )
-}
-
 // Promisify various public-facing APIs on the Client module.
 Client.prototype.makeBucket = promisify(Client.prototype.makeBucket)
-Client.prototype.listBuckets = promisify(Client.prototype.listBuckets)
 Client.prototype.bucketExists = promisify(Client.prototype.bucketExists)
 Client.prototype.removeBucket = promisify(Client.prototype.removeBucket)
 
@@ -3889,143 +3883,3 @@ Client.prototype.getObjectLegalHold = promisify(Client.prototype.getObjectLegalH
 Client.prototype.composeObject = promisify(Client.prototype.composeObject)
 
 // Client.prototype.selectObjectContent = promisify(Client.prototype.selectObjectContent)
-
-export class CopyConditions {
-  constructor() {
-    this.modified = ''
-    this.unmodified = ''
-    this.matchETag = ''
-    this.matchETagExcept = ''
-  }
-
-  setModified(date) {
-    if (!(date instanceof Date)) {
-      throw new TypeError('date must be of type Date')
-    }
-
-    this.modified = date.toUTCString()
-  }
-
-  setUnmodified(date) {
-    if (!(date instanceof Date)) {
-      throw new TypeError('date must be of type Date')
-    }
-
-    this.unmodified = date.toUTCString()
-  }
-
-  setMatchETag(etag) {
-    this.matchETag = etag
-  }
-
-  setMatchETagExcept(etag) {
-    this.matchETagExcept = etag
-  }
-}
-
-// Build PostPolicy object that can be signed by presignedPostPolicy
-export class PostPolicy {
-  constructor() {
-    this.policy = {
-      conditions: [],
-    }
-    this.formData = {}
-  }
-
-  // set expiration date
-  setExpires(date) {
-    if (!date) {
-      throw new errors.InvalidDateError('Invalid date : cannot be null')
-    }
-    this.policy.expiration = date.toISOString()
-  }
-
-  // set object name
-  setKey(objectName) {
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name : ${objectName}`)
-    }
-    this.policy.conditions.push(['eq', '$key', objectName])
-    this.formData.key = objectName
-  }
-
-  // set object name prefix, i.e policy allows any keys with this prefix
-  setKeyStartsWith(prefix) {
-    if (!isValidPrefix(prefix)) {
-      throw new errors.InvalidPrefixError(`Invalid prefix : ${prefix}`)
-    }
-    this.policy.conditions.push(['starts-with', '$key', prefix])
-    this.formData.key = prefix
-  }
-
-  // set bucket name
-  setBucket(bucketName) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError(`Invalid bucket name : ${bucketName}`)
-    }
-    this.policy.conditions.push(['eq', '$bucket', bucketName])
-    this.formData.bucket = bucketName
-  }
-
-  // set Content-Type
-  setContentType(type) {
-    if (!type) {
-      throw new Error('content-type cannot be null')
-    }
-    this.policy.conditions.push(['eq', '$Content-Type', type])
-    this.formData['Content-Type'] = type
-  }
-
-  // set Content-Type prefix, i.e image/ allows any image
-  setContentTypeStartsWith(prefix) {
-    if (!prefix) {
-      throw new Error('content-type cannot be null')
-    }
-    this.policy.conditions.push(['starts-with', '$Content-Type', prefix])
-    this.formData['Content-Type'] = prefix
-  }
-
-  // set Content-Disposition
-  setContentDisposition(value) {
-    if (!value) {
-      throw new Error('content-disposition cannot be null')
-    }
-    this.policy.conditions.push(['eq', '$Content-Disposition', value])
-    this.formData['Content-Disposition'] = value
-  }
-
-  // set minimum/maximum length of what Content-Length can be.
-  setContentLengthRange(min, max) {
-    if (min > max) {
-      throw new Error('min cannot be more than max')
-    }
-    if (min < 0) {
-      throw new Error('min should be > 0')
-    }
-    if (max < 0) {
-      throw new Error('max should be > 0')
-    }
-    this.policy.conditions.push(['content-length-range', min, max])
-  }
-
-  // set user defined metadata
-  setUserMetaData(metaData) {
-    if (!isObject(metaData)) {
-      throw new TypeError('metadata should be of type "object"')
-    }
-    Object.entries(metaData).forEach(([key, value]) => {
-      const amzMetaDataKey = `x-amz-meta-${key}`
-      this.policy.conditions.push(['eq', `$${amzMetaDataKey}`, value])
-      this.formData[amzMetaDataKey] = value
-    })
-  }
-}
-
-export { sanitizeETag } from './helpers.mts'
-export { pipesetup } from './helpers.mts'
-export { readableStream } from './helpers.mts'
-export { makeDateShort } from './helpers.mts'
-export { makeDateLong } from './helpers.mts'
-export { uriResourceEscape } from './helpers.mts'
-export { uriEscape } from './helpers.mts'
-export { getScope } from './helpers.mts'

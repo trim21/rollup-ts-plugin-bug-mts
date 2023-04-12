@@ -29,7 +29,7 @@ import querystring from 'query-string'
 
 import * as errors from './errors.mts'
 
-export type MetaData = Record<string, string | number>
+export type MetaData = Record<string, string>
 export type Header = Record<string, string | null | undefined>
 
 const fxp = new XMLParser()
@@ -282,11 +282,9 @@ export function makeDateShort(date?: Date) {
 // pipesetup sets up pipe() from left to right os streams array
 // pipesetup will also make sure that error emitted at any of the upstream Stream
 // will be emitted at the last stream. This makes error handling simple
-export function pipesetup(...streams: any[]) {
-  return streams.reduce((src, dst) => {
-    src.on('error', (err: any) => dst.emit('error', err))
-    return src.pipe(dst)
-  })
+export function pipesetup(src: stream.Readable, dst: stream.Writable) {
+  src.on('error', (err: any) => dst.emit('error', err))
+  return src.pipe(dst)
 }
 
 // return a Readable stream that emits data

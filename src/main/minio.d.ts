@@ -4,8 +4,9 @@ import { EventEmitter } from 'events'
 import { RequestOptions } from 'https'
 import { Readable as ReadableStream } from 'stream'
 
+import { CopyConditions } from './copyConditions.mts'
+import { PostPolicy } from './postPolicy.mts'
 import { Region } from './s3-endpoints.mts'
-import { UploadID } from './type.ts'
 
 // Exports only from typings
 export { Region }
@@ -41,6 +42,7 @@ export type Lock = LockConfig | EmptyObject
 export type Encryption = EncryptionConfig | EmptyObject
 export type Retention = RetentionOptions | EmptyObject
 export type IsoDate = string
+export { CopyConditions, PostPolicy }
 
 export interface ClientOptions {
   endPoint: string
@@ -647,36 +649,6 @@ export namespace Policy {
   const READONLY: 'readonly'
   const WRITEONLY: 'writeonly'
   const READWRITE: 'readwrite'
-}
-
-export class CopyConditions {
-  setModified(date: Date): void
-
-  setUnmodified(date: Date): void
-
-  setMatchETag(etag: string): void
-
-  setMatchETagExcept(etag: string): void
-}
-
-export class PostPolicy {
-  setExpires(date: Date): void
-
-  setKey(objectName: string): void
-
-  setKeyStartsWith(prefix: string): void
-
-  setBucket(bucketName: string): void
-
-  setContentType(type: string): void
-
-  setContentTypeStartsWith(prefix: string): void
-
-  setContentLengthRange(min: number, max: number): void
-
-  setContentDisposition(disposition: string): void
-
-  setUserMetaData(metadata: Record<string, string>): void
 }
 
 export class NotificationPoller extends EventEmitter {

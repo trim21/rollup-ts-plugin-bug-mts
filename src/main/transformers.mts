@@ -22,7 +22,7 @@ import Through2 from 'through2'
 
 import { isFunction } from './asserts.mts'
 import * as errors from './errors.mts'
-import JSONParser from './json-stream.mjs'
+import JSONParser from './vendor/json-stream.mjs'
 import * as xmlParsers from './xml-parsers/index.mts'
 
 // getConcater returns a stream that concatenates the input and emits
@@ -226,7 +226,7 @@ export function getBucketNotificationTransformer() {
 // Parses a notification.
 export function getNotificationTransformer() {
   // This will parse and return each object.
-  return JSONParser()
+  return new JSONParser()
 }
 
 export function bucketVersioningTransformer() {

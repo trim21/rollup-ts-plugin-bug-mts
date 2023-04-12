@@ -37,7 +37,6 @@ import {
   CopyDestinationOptions,
   CopySourceOptions,
   extractMetadata,
-  getScope,
   insertContentType,
   isAmazonEndpoint,
   isValidBucketName,
@@ -54,16 +53,17 @@ import {
   RETENTION_VALIDITY_UNITS,
   toMd5,
   toSha256,
-  uriEscape,
-  uriResourceEscape,
 } from './helpers'
 import {
+  getScope,
   getSourceVersionId,
   getVersionId,
   makeDateLong,
   pipesetup,
   readableStream,
   sanitizeETag,
+  uriEscape,
+  uriResourceEscape,
 } from './helpers-typed'
 import { NotificationConfig, NotificationPoller } from './notification'
 import ObjectUploader from './object-uploader'
@@ -3989,3 +3989,6 @@ export { pipesetup } from './helpers-typed.mjs'
 export { readableStream } from './helpers-typed.mjs'
 export { makeDateShort } from './helpers-typed.mjs'
 export { makeDateLong } from './helpers-typed.mjs'
+export { uriResourceEscape } from './helpers-typed.mjs'
+export { uriEscape } from './helpers-typed.mjs'
+export { getScope } from './helpers-typed.mjs'

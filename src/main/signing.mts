@@ -17,10 +17,10 @@
 import Crypto from 'crypto'
 import _ from 'lodash'
 
-import { isArray, isNumber, isObject, isString } from './asserts'
-import * as errors from './errors'
-import { getScope, uriEscape } from './helpers'
-import { makeDateLong, makeDateShort } from './helpers-typed'
+import { isArray, isNumber, isObject, isString } from './asserts.mts'
+import * as errors from './errors.mts'
+import { getScope, makeDateLong, makeDateShort, uriEscape } from './helpers-typed.mts'
+import type { ICanonicalRequest, IRequest, RequestHeader } from './type.ts'
 
 const signV4Algorithm = 'AWS4-HMAC-SHA256'
 
@@ -34,7 +34,13 @@ const signV4Algorithm = 'AWS4-HMAC-SHA256'
 //  <SignedHeaders>\n
 //  <HashedPayload>
 //
-function getCanonicalRequest(method, path, headers, signedHeaders, hashedPayload) {
+function getCanonicalRequest(
+  method: string,
+  path: string,
+  headers: RequestHeader,
+  signedHeaders: string[],
+  hashedPayload: string
+): ICanonicalRequest {
   if (!isString(method)) {
     throw new TypeError('method should be of type "string"')
   }
@@ -50,12 +56,13 @@ function getCanonicalRequest(method, path, headers, signedHeaders, hashedPayload
   if (!isString(hashedPayload)) {
     throw new TypeError('hashedPayload should be of type "string"')
   }
+
   const headersArray = signedHeaders.reduce((acc, i) => {
     // Trim spaces from the value (required by V4 spec)
     const val = `${headers[i]}`.replace(/ +/g, ' ')
     acc.push(`${i.toLowerCase()}:${val}`)
     return acc
-  }, [])
+  }, [] as string[])
 
   const requestResource = path.split('?')[0]
   let requestQuery = path.split('?')[1]
@@ -82,7 +89,7 @@ function getCanonicalRequest(method, path, headers, signedHeaders, hashedPayload
 }
 
 // generate a credential string
-function getCredential(accessKey, region, requestDate, serviceName = 's3') {
+function getCredential(accessKey: string, region: string, requestDate?: Date, serviceName = 's3') {
   if (!isString(accessKey)) {
     throw new TypeError('accessKey should be of type "string"')
   }
@@ -96,7 +103,7 @@ function getCredential(accessKey, region, requestDate, serviceName = 's3') {
 }
 
 // Returns signed headers array - alphabetically sorted
-function getSignedHeaders(headers) {
+function getSignedHeaders(headers: RequestHeader): string[] {
   if (!isObject(headers)) {
     throw new TypeError('request should be of type "object"')
   }
@@ -134,7 +141,7 @@ function getSignedHeaders(headers) {
 }
 
 // returns the key used for calculating signature
-function getSigningKey(date, region, secretKey, serviceName = 's3') {
+function getSigningKey(date: Date, region: string, secretKey: string, serviceName = 's3') {
   if (!isObject(date)) {
     throw new TypeError('date should be of type "object"')
   }
@@ -154,7 +161,7 @@ function getSigningKey(date, region, secretKey, serviceName = 's3') {
 }
 
 // returns the string that needs to be signed
-function getStringToSign(canonicalRequest, requestDate, region, serviceName = 's3') {
+function getStringToSign(canonicalRequest: ICanonicalRequest, requestDate: Date, region: string, serviceName = 's3') {
   if (!isString(canonicalRequest)) {
     throw new TypeError('canonicalRequest should be of type "string"')
   }
@@ -166,17 +173,13 @@ function getStringToSign(canonicalRequest, requestDate, region, serviceName = 's
   }
   const hash = Crypto.createHash('sha256').update(canonicalRequest).digest('hex')
   const scope = getScope(region, requestDate, serviceName)
-  const stringToSign = []
-  stringToSign.push(signV4Algorithm)
-  stringToSign.push(makeDateLong(requestDate))
-  stringToSign.push(scope)
-  stringToSign.push(hash)
-  const signString = stringToSign.join('\n')
-  return signString
+  const stringToSign = [signV4Algorithm, makeDateLong(requestDate), scope, hash]
+
+  return stringToSign.join('\n')
 }
 
 // calculate the signature of the POST policy
-export function postPresignSignatureV4(region, date, secretKey, policyBase64) {
+export function postPresignSignatureV4(region: string, date: Date, secretKey: string, policyBase64: string): string {
   if (!isString(region)) {
     throw new TypeError('region should be of type "string"')
   }
@@ -194,7 +197,14 @@ export function postPresignSignatureV4(region, date, secretKey, policyBase64) {
 }
 
 // Returns the authorization header
-export function signV4(request, accessKey, secretKey, region, requestDate, serviceName = 's3') {
+export function signV4(
+  request: IRequest,
+  accessKey: string,
+  secretKey: string,
+  region: string,
+  requestDate: Date,
+  serviceName = 's3'
+) {
   if (!isObject(request)) {
     throw new TypeError('request should be of type "object"')
   }
@@ -230,11 +240,27 @@ export function signV4(request, accessKey, secretKey, region, requestDate, servi
     .toLowerCase()}, Signature=${signature}`
 }
 
-export function signV4ByServiceName(request, accessKey, secretKey, region, requestDate, serviceName = 's3') {
+export function signV4ByServiceName(
+  request: IRequest,
+  accessKey: string,
+  secretKey: string,
+  region: string,
+  requestDate: Date,
+  serviceName = 's3'
+): string {
   return signV4(request, accessKey, secretKey, region, requestDate, serviceName)
 }
+
 // returns a presigned URL string
-export function presignSignatureV4(request, accessKey, secretKey, sessionToken, region, requestDate, expires) {
+export function presignSignatureV4(
+  request: IRequest,
+  accessKey: string,
+  secretKey: string,
+  sessionToken: string,
+  region: string,
+  requestDate: Date,
+  expires: unknown
+) {
   if (!isObject(request)) {
     throw new TypeError('request should be of type "object"')
   }
@@ -295,6 +321,5 @@ export function presignSignatureV4(request, accessKey, secretKey, sessionToken, 
   const stringToSign = getStringToSign(canonicalRequest, requestDate, region)
   const signingKey = getSigningKey(requestDate, region, secretKey)
   const signature = Crypto.createHmac('sha256', signingKey).update(stringToSign).digest('hex').toLowerCase()
-  const presignedUrl = request.protocol + '//' + request.headers.host + path + `&X-Amz-Signature=${signature}`
-  return presignedUrl
+  return request.protocol + '//' + request.headers.host + path + `&X-Amz-Signature=${signature}`
 }

@@ -16,8 +16,7 @@
 
 import { EventEmitter } from 'events'
 
-import { uriEscape } from './helpers'
-import { pipesetup } from './helpers-typed'
+import { pipesetup, uriEscape } from './helpers-typed'
 import { DEFAULT_REGION } from './s3-endpoints'
 import * as transformers from './transformers'
 

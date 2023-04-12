@@ -53,3 +53,43 @@ export function makeDateShort(date?: Date): string {
 
   return s.slice(0, 4) + s.slice(5, 7) + s.slice(8, 10)
 }
+
+// All characters in string which are NOT unreserved should be percent encoded.
+// Unreserved characers are : ALPHA / DIGIT / "-" / "." / "_" / "~"
+// Reference https://tools.ietf.org/html/rfc3986#section-2.2
+export function uriEscape(s: string): string {
+  return s.split('').reduce((acc, elem) => {
+    let buf = Buffer.from(elem)
+    if (buf.length === 1) {
+      // length 1 indicates that elem is not a unicode character.
+      // Check if it is an unreserved characer.
+      if (
+        ('A' <= elem && elem <= 'Z') ||
+        ('a' <= elem && elem <= 'z') ||
+        ('0' <= elem && elem <= '9') ||
+        elem === '_' ||
+        elem === '.' ||
+        elem === '~' ||
+        elem === '-'
+      ) {
+        // Unreserved characer should not be encoded.
+        acc = acc + elem
+        return acc
+      }
+    }
+    // elem needs encoding - i.e elem should be encoded if it's not unreserved
+    // character or if it's a unicode character.
+    for (let i = 0; i < buf.length; i++) {
+      acc = acc + '%' + buf[i].toString(16).toUpperCase()
+    }
+    return acc
+  }, '')
+}
+
+export function uriResourceEscape(s: string): string {
+  return uriEscape(s).replace(/%2F/g, '/')
+}
+
+export function getScope(region: string, date?: Date, serviceName = 's3') {
+  return `${makeDateShort(date)}/${region}/${serviceName}/aws4_request`
+}

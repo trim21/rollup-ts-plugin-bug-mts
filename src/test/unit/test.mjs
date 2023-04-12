@@ -27,10 +27,9 @@ import {
   CopySourceOptions,
   isValidEndpoint,
   isValidIP,
-  makeDateLong,
-  makeDateShort,
   partsRequired,
 } from '../../main/helpers'
+import { makeDateLong, makeDateShort } from '../../main/helpers-typed'
 import * as Minio from '../../main/minio'
 
 const Package = { version: 'development' }

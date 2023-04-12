@@ -17,16 +17,14 @@
 import { isBrowser } from 'browser-or-node'
 import * as crypto from 'crypto'
 import { XMLParser } from 'fast-xml-parser'
-import fs from 'fs'
 import ipaddr from 'ipaddr.js'
 import _ from 'lodash'
 import mime from 'mime-types'
-import path from 'path'
 import querystring from 'query-string'
-import stream from 'stream'
 
 import { isNumber, isObject, isString } from './asserts'
 import * as errors from './errors'
+import { makeDateShort } from './helpers-typed'
 
 const fxp = new XMLParser()
 
@@ -207,47 +205,6 @@ export function isValidPrefix(prefix) {
   return true
 }
 
-// Create a Date string with format:
-// 'YYYYMMDDTHHmmss' + Z
-export function makeDateLong(date) {
-  date = date || new Date()
-
-  // Gives format like: '2017-08-07T16:28:59.889Z'
-  date = date.toISOString()
-
-  return date.slice(0, 4) + date.slice(5, 7) + date.slice(8, 13) + date.slice(14, 16) + date.slice(17, 19) + 'Z'
-}
-
-// Create a Date string with format:
-// 'YYYYMMDD'
-export function makeDateShort(date) {
-  date = date || new Date()
-
-  // Gives format like: '2017-08-07T16:28:59.889Z'
-  date = date.toISOString()
-
-  return date.slice(0, 4) + date.slice(5, 7) + date.slice(8, 10)
-}
-
-// pipesetup sets up pipe() from left to right os streams array
-// pipesetup will also make sure that error emitted at any of the upstream Stream
-// will be emitted at the last stream. This makes error handling simple
-export function pipesetup(...streams) {
-  return streams.reduce((src, dst) => {
-    src.on('error', (err) => dst.emit('error', err))
-    return src.pipe(dst)
-  })
-}
-
-// return a Readable stream that emits data
-export function readableStream(data) {
-  var s = new stream.Readable()
-  s._read = () => {}
-  s.push(data)
-  s.push(null)
-  return s
-}
-
 // Process metadata to insert appropriate value to `content-type` attribute
 export function insertContentType(metaData, filePath) {
   // check if content-type attribute present in metaData
@@ -316,21 +273,6 @@ export function extractMetadata(metaData) {
     }
   }
   return newMetadata
-}
-
-export function getVersionId(headers = {}) {
-  const versionIdValue = headers['x-amz-version-id']
-  return versionIdValue || null
-}
-
-export function getSourceVersionId(headers = {}) {
-  const sourceVersionId = headers['x-amz-copy-source-version-id']
-  return sourceVersionId || null
-}
-
-export function sanitizeETag(etag = '') {
-  var replaceChars = { '"': '', '&quot;': '', '&#34;': '', '&QUOT;': '', '&#x00022': '' }
-  return etag.replace(/^("|&quot;|&#34;)|("|&quot;|&#34;)$/g, (m) => replaceChars[m])
 }
 
 export const RETENTION_MODES = {
@@ -670,30 +612,6 @@ export function calculateEvenSplits(size, objInfo) {
   }
 
   return { startIndex: startIndexParts, endIndex: endIndexParts, objInfo: objInfo }
-}
-
-export function removeDirAndFiles(dirPath, removeSelf) {
-  if (removeSelf === undefined) {
-    removeSelf = true
-  }
-  try {
-    var files = fs.readdirSync(dirPath)
-  } catch (e) {
-    return
-  }
-  if (files.length > 0) {
-    for (var i = 0; i < files.length; i++) {
-      var filePath = path.join(dirPath, files[i])
-      if (fs.statSync(filePath).isFile()) {
-        fs.unlinkSync(filePath)
-      } else {
-        removeDirAndFiles(filePath)
-      }
-    }
-  }
-  if (removeSelf) {
-    fs.rmdirSync(dirPath)
-  }
 }
 
 export const parseXml = (xml) => {

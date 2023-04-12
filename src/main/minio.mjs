@@ -38,8 +38,6 @@ import {
   CopySourceOptions,
   extractMetadata,
   getScope,
-  getSourceVersionId,
-  getVersionId,
   insertContentType,
   isAmazonEndpoint,
   isValidBucketName,
@@ -49,20 +47,24 @@ import {
   isValidPrefix,
   isVirtualHostStyle,
   LEGAL_HOLD_STATUS,
-  makeDateLong,
   PART_CONSTRAINTS,
   partsRequired,
-  pipesetup,
   prependXAMZMeta,
-  readableStream,
   RETENTION_MODES,
   RETENTION_VALIDITY_UNITS,
-  sanitizeETag,
   toMd5,
   toSha256,
   uriEscape,
   uriResourceEscape,
 } from './helpers'
+import {
+  getSourceVersionId,
+  getVersionId,
+  makeDateLong,
+  pipesetup,
+  readableStream,
+  sanitizeETag,
+} from './helpers-typed'
 import { NotificationConfig, NotificationPoller } from './notification'
 import ObjectUploader from './object-uploader'
 import { promisify } from './promisify'
@@ -74,6 +76,9 @@ import { parseSelectObjectContentResponse } from './xml-parsers'
 export * from './helpers'
 export * from './notification'
 export { DEFAULT_REGION }
+export { removeDirAndFiles } from '../test/utils'
+export * from './helpers-typed'
+export { SelectResults } from './SelectResults'
 
 // will be replaced by rollup plugin
 const version = process.env.MINIO_JS_PACKAGE_VERSION || 'development'
@@ -3979,4 +3984,8 @@ export class PostPolicy {
     })
   }
 }
-export { SelectResults } from './SelectResults'
+export { sanitizeETag } from './helpers-typed.mjs'
+export { pipesetup } from './helpers-typed.mjs'
+export { readableStream } from './helpers-typed.mjs'
+export { makeDateShort } from './helpers-typed.mjs'
+export { makeDateLong } from './helpers-typed.mjs'

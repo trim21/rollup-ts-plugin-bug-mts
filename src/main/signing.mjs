@@ -19,7 +19,8 @@ import _ from 'lodash'
 
 import { isArray, isNumber, isObject, isString } from './asserts'
 import * as errors from './errors'
-import { getScope, makeDateLong, makeDateShort, uriEscape } from './helpers'
+import { getScope, uriEscape } from './helpers'
+import { makeDateLong, makeDateShort } from './helpers-typed'
 
 const signV4Algorithm = 'AWS4-HMAC-SHA256'
 

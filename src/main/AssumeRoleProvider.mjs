@@ -4,7 +4,8 @@ import { URL, URLSearchParams } from 'url'
 
 import CredentialProvider from './CredentialProvider'
 import Credentials from './Credentials'
-import { makeDateLong, parseXml, toSha256 } from './helpers'
+import { parseXml, toSha256 } from './helpers'
+import { makeDateLong } from './helpers-typed'
 import { signV4ByServiceName } from './signing'
 
 export default class AssumeRoleProvider extends CredentialProvider {

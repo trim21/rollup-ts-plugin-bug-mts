@@ -31,9 +31,11 @@ import * as uuid from 'uuid'
 
 import { isArray } from '../../main/asserts'
 import AssumeRoleProvider from '../../main/AssumeRoleProvider'
-import { CopyDestinationOptions, CopySourceOptions, getVersionId, removeDirAndFiles } from '../../main/helpers'
+import { CopyDestinationOptions, CopySourceOptions } from '../../main/helpers'
+import { getVersionId } from '../../main/helpers-typed'
 import * as minio from '../../main/minio'
 import { DEFAULT_REGION } from '../../main/s3-endpoints'
+import { removeDirAndFiles } from '../utils'
 
 const assert = chai.assert
 

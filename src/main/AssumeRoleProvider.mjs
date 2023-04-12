@@ -7,7 +7,7 @@ import Credentials from './Credentials'
 import { makeDateLong, parseXml, toSha256 } from './helpers'
 import { signV4ByServiceName } from './signing'
 
-class AssumeRoleProvider extends CredentialProvider {
+export default class AssumeRoleProvider extends CredentialProvider {
   constructor({
     stsEndpoint,
     accessKey,
@@ -208,5 +208,3 @@ class AssumeRoleProvider extends CredentialProvider {
     return isAboutToExpire
   }
 }
-
-export default AssumeRoleProvider

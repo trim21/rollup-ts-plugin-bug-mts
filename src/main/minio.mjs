@@ -28,16 +28,7 @@ import { TextEncoder } from 'web-encoding'
 import Xml from 'xml'
 import xml2js from 'xml2js'
 
-import {
-  isArray,
-  isBoolean,
-  isFunction,
-  isNumber,
-  isObject,
-  isReadableStream,
-  isString,
-  isValidDate,
-} from './asserts.mjs'
+import { isArray, isBoolean, isFunction, isNumber, isObject, isReadableStream, isString, isValidDate } from './asserts'
 import CredentialProvider from './CredentialProvider'
 import * as errors from './errors'
 import extensions from './extensions'
@@ -45,7 +36,6 @@ import {
   calculateEvenSplits,
   CopyDestinationOptions,
   CopySourceOptions,
-  DEFAULT_REGION,
   extractMetadata,
   getScope,
   getSourceVersionId,
@@ -64,7 +54,6 @@ import {
   partsRequired,
   pipesetup,
   prependXAMZMeta,
-  promisify,
   readableStream,
   RETENTION_MODES,
   RETENTION_VALIDITY_UNITS,
@@ -76,13 +65,15 @@ import {
 } from './helpers'
 import { NotificationConfig, NotificationPoller } from './notification'
 import ObjectUploader from './object-uploader'
-import { getS3Endpoint } from './s3-endpoints'
+import { promisify } from './promisify'
+import { DEFAULT_REGION, getS3Endpoint } from './s3-endpoints'
 import { postPresignSignatureV4, presignSignatureV4, signV4 } from './signing'
 import * as transformers from './transformers'
 import { parseSelectObjectContentResponse } from './xml-parsers'
 
 export * from './helpers'
 export * from './notification'
+export { DEFAULT_REGION }
 
 // will be replaced by rollup plugin
 const version = process.env.MINIO_JS_PACKAGE_VERSION || 'development'
@@ -3988,11 +3979,4 @@ export class PostPolicy {
     })
   }
 }
-export { isValidDate } from './asserts.mjs'
-export { isArray } from './asserts.mjs'
-export { isBoolean } from './asserts.mjs'
-export { isReadableStream } from './asserts.mjs'
-export { isObject } from './asserts.mjs'
-export { isString } from './asserts.mjs'
-export { isFunction } from './asserts.mjs'
-export { isNumber } from './asserts.mjs'
+export { SelectResults } from './SelectResults'

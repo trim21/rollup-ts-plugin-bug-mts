@@ -20,7 +20,7 @@ import { assert } from 'chai'
 import Nock from 'nock'
 import Stream from 'stream'
 
-import { isArray } from '../../main/asserts.mjs'
+import { isArray } from '../../main/asserts'
 import {
   calculateEvenSplits,
   CopyDestinationOptions,

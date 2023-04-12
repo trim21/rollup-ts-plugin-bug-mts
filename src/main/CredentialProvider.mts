@@ -1,7 +1,9 @@
-import Credentials from './Credentials'
+import Credentials from './Credentials.mts'
 
-class CredentialProvider {
-  constructor({ accessKey, secretKey, sessionToken }) {
+export default class CredentialProvider {
+  private credentials: Credentials
+
+  constructor({ accessKey, secretKey, sessionToken }: { accessKey: string; secretKey: string; sessionToken: string }) {
     this.credentials = new Credentials({
       accessKey,
       secretKey,
@@ -13,7 +15,7 @@ class CredentialProvider {
     return this.credentials.get()
   }
 
-  setCredentials(credentials) {
+  setCredentials(credentials: Credentials) {
     if (credentials instanceof Credentials) {
       this.credentials = credentials
     } else {
@@ -21,7 +23,7 @@ class CredentialProvider {
     }
   }
 
-  setAccessKey(accessKey) {
+  setAccessKey(accessKey: string) {
     this.credentials.setAccessKey(accessKey)
   }
 
@@ -29,7 +31,7 @@ class CredentialProvider {
     return this.credentials.getAccessKey()
   }
 
-  setSecretKey(secretKey) {
+  setSecretKey(secretKey: string) {
     this.credentials.setSecretKey(secretKey)
   }
 
@@ -37,7 +39,7 @@ class CredentialProvider {
     return this.credentials.getSecretKey()
   }
 
-  setSessionToken(sessionToken) {
+  setSessionToken(sessionToken: string) {
     this.credentials.setSessionToken(sessionToken)
   }
 
@@ -45,5 +47,3 @@ class CredentialProvider {
     return this.credentials.getSessionToken()
   }
 }
-
-export default CredentialProvider

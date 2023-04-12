@@ -16,6 +16,8 @@
 
 import { isString } from './asserts.mts'
 
+export const DEFAULT_REGION = 'us-east-1'
+
 // List of currently supported endpoints.
 const awsS3Endpoint = {
   'us-east-1': 's3.amazonaws.com',

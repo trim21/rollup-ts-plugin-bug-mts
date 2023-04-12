@@ -16,7 +16,8 @@
 
 import { EventEmitter } from 'events'
 
-import { DEFAULT_REGION, pipesetup, uriEscape } from './helpers'
+import { pipesetup, uriEscape } from './helpers'
+import { DEFAULT_REGION } from './s3-endpoints'
 import * as transformers from './transformers'
 
 // Notification config - array of target configs.

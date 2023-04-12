@@ -29,16 +29,11 @@ import superagent from 'superagent'
 import url from 'url'
 import * as uuid from 'uuid'
 
-import { isArray } from '../../main/asserts.mjs'
+import { isArray } from '../../main/asserts'
 import AssumeRoleProvider from '../../main/AssumeRoleProvider'
-import {
-  CopyDestinationOptions,
-  CopySourceOptions,
-  DEFAULT_REGION,
-  getVersionId,
-  removeDirAndFiles,
-} from '../../main/helpers'
+import { CopyDestinationOptions, CopySourceOptions, getVersionId, removeDirAndFiles } from '../../main/helpers'
 import * as minio from '../../main/minio'
+import { DEFAULT_REGION } from '../../main/s3-endpoints'
 
 const assert = chai.assert
 

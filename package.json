@@ -8,6 +8,7 @@
   "scripts": {
     "format": "prettier -w .",
     "format-check": "prettier --list-different .",
+    "prebuild": "rimraf ./dist/",
     "build": "rollup -c rollup.config.cjs",
     "test": "mocha",
     "lint": "eslint --ext js,mjs,cjs,ts,mts,cts ./src/",
@@ -106,6 +107,7 @@
     "mocha-steps": "^1.1.0",
     "nock": "^13.2.2",
     "prettier": "^2.8.7",
+    "rimraf": "^5.0.0",
     "rollup-plugin-node-externals": "^5.1.2",
     "source-map-support": "^0.5.13",
     "split-file": "^2.2.2",

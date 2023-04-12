@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { isString } from './helpers'
+import { isString } from './helpers.mjs'
 
 // List of currently supported endpoints.
 let awsS3Endpoint = {

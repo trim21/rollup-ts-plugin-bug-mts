@@ -11,10 +11,13 @@ module.exports = {
   input: pkg.source,
   plugins: [
     nodeResolve({ extensions: ['.mjs', '.js', '.ts', '.mts', '.json', '.node'] }),
-    getBabelOutputPlugin({ presets: ['@babel/preset-env'] }),
+    getBabelOutputPlugin({
+      presets: [['@babel/env', { targets: { node: '8' }, modules: false }]],
+    }),
     externals({ builtinsPrefix: 'strip' }),
     typescript({
       tsconfig: 'tsconfig.json',
+      outputToFilesystem: false,
     }),
     replace({
       'process.env.MINIO_JS_PACKAGE_VERSION': JSON.stringify(pkg.version),

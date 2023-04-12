@@ -71,13 +71,16 @@ import {
   toSha256,
   uriEscape,
   uriResourceEscape,
-} from './helpers'
-import { NotificationConfig, NotificationPoller } from './notification'
-import ObjectUploader from './object-uploader'
-import { getS3Endpoint } from './s3-endpoints'
-import { postPresignSignatureV4, presignSignatureV4, signV4 } from './signing'
-import * as transformers from './transformers'
-import { parseSelectObjectContentResponse } from './xml-parsers'
+} from './helpers.mjs'
+import { NotificationConfig, NotificationPoller } from './notification.mjs'
+import ObjectUploader from './object-uploader.mjs'
+import { getS3Endpoint } from './s3-endpoints.mjs'
+import { postPresignSignatureV4, presignSignatureV4, signV4 } from './signing.mjs'
+import * as transformers from './transformers.mjs'
+import { parseSelectObjectContentResponse } from './xml-parsers.mjs'
+
+export * from './helpers.mjs'
+export * from './notification.mjs'
 
 // will be replaced by rollup plugin
 const version = process.env.MINIO_JS_PACKAGE_VERSION || 'development'
@@ -3460,6 +3463,7 @@ export class Client {
 
     this.makeRequest({ method, bucketName, objectName, query, headers }, payload, [200], '', false, cb)
   }
+
   async setCredentialsProvider(credentialsProvider) {
     if (!(credentialsProvider instanceof CredentialProvider)) {
       throw new Error('Unable to get  credentials. Expected instance of CredentialProvider')
@@ -3713,6 +3717,7 @@ export class Client {
         cb(error, null)
       })
   }
+
   selectObjectContent(bucketName, objectName, selectOpts = {}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
@@ -3981,6 +3986,3 @@ export class PostPolicy {
     })
   }
 }
-
-export * from './helpers'
-export * from './notification'

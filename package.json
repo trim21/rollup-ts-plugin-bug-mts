@@ -5,6 +5,7 @@
   "source": "./src/main/minio.mjs",
   "main": "./dist/cjs/minio.cjs",
   "module": "./dist/esm/minio.mjs",
+  "types": "./src/main/minio.d.ts",
   "scripts": {
     "format": "prettier -w .",
     "format-check": "prettier --list-different .",
@@ -20,6 +21,7 @@
   },
   "exports": {
     ".": {
+      "types": "./src/main/minio.d.ts",
       "require": "./dist/cjs/minio.cjs",
       "default": "./dist/esm/minio.mjs"
     },

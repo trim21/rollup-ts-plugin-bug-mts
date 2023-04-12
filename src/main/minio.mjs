@@ -81,7 +81,6 @@ import { postPresignSignatureV4, presignSignatureV4, signV4 } from './signing'
 import * as transformers from './transformers'
 import { parseSelectObjectContentResponse } from './xml-parsers'
 
-export * from './asserts'
 export * from './helpers'
 export * from './notification'
 

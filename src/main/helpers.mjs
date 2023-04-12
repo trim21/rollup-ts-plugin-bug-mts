@@ -274,7 +274,7 @@ export function pipesetup(...streams) {
 // return a Readable stream that emits data
 export function readableStream(data) {
   var s = new stream.Readable()
-  s._read = () => { }
+  s._read = () => {}
   s.push(data)
   s.push(null)
   return s
@@ -597,8 +597,8 @@ export class CopyDestinationOptions {
       headerOptions['X-Amz-Tagging'] = isObject(userTags)
         ? querystring.stringify(userTags)
         : isString(userTags)
-          ? userTags
-          : ''
+        ? userTags
+        : ''
     }
 
     if (!_.isEmpty(this.Mode)) {

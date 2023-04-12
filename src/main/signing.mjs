@@ -145,8 +145,8 @@ function getSigningKey(date, region, secretKey, serviceName = 's3') {
   }
   const dateLine = makeDateShort(date)
   let hmac1 = Crypto.createHmac('sha256', 'AWS4' + secretKey)
-    .update(dateLine)
-    .digest(),
+      .update(dateLine)
+      .digest(),
     hmac2 = Crypto.createHmac('sha256', hmac1).update(region).digest(),
     hmac3 = Crypto.createHmac('sha256', hmac2).update(serviceName).digest()
   return Crypto.createHmac('sha256', hmac3).update('aws4_request').digest()

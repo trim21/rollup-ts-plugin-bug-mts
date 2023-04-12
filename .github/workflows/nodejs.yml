@@ -32,7 +32,9 @@ jobs:
 
       - run: npm ci
 
-      - run: npx tsc --noEmit
+      - name: Type Checking
+        run: npx tsc
+
       - run: npm run build
 
   test:

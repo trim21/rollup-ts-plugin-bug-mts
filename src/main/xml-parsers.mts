@@ -17,34 +17,42 @@ import crc32 from 'buffer-crc32'
 import { XMLParser } from 'fast-xml-parser'
 import _ from 'lodash'
 
-import { isObject } from './asserts'
-import * as errors from './errors'
-import { parseXml, readableStream, RETENTION_VALIDITY_UNITS, sanitizeETag, sanitizeObjectKey, toArray } from './helpers'
-import { SelectResults } from './SelectResults'
+import { isObject } from './asserts.mts'
+import * as errors from './errors.mts'
+import {
+  parseXml,
+  readableStream,
+  RETENTION_VALIDITY_UNITS,
+  sanitizeETag,
+  sanitizeObjectKey,
+  toArray
+} from './helpers.mts'
+import { SelectResults } from './SelectResults.mts'
 // Parse XML and return information as Javascript types
 const fxp = new XMLParser()
 
 // parse error XML response
-export function parseError(xml, headerInfo) {
+export function parseError(xml: string, headerInfo) {
   var xmlErr = {}
   var xmlObj = fxp.parse(xml)
   if (xmlObj.Error) {
     xmlErr = xmlObj.Error
   }
 
-  var e = new errors.S3Error()
-  _.each(xmlErr, (value, key) => {
+  var e = new errors.S3Error() as unknown as Record<string, any>
+  Object.entries(xmlErr).forEach(([key, value]) => {
     e[key.toLowerCase()] = value
   })
 
-  _.each(headerInfo, (value, key) => {
+  Object.entries(headerInfo).forEach(([key, value]) => {
     e[key] = value
   })
+
   return e
 }
 
 // parse XML response for copy object
-export function parseCopyObject(xml) {
+export function parseCopyObject(xml: string) {
   var result = {
     etag: '',
     lastModified: '',
@@ -71,7 +79,7 @@ export function parseCopyObject(xml) {
 }
 
 // parse XML response for listing in-progress multipart uploads
-export function parseListMultipart(xml) {
+export function parseListMultipart(xml: string) {
   var result = {
     uploads: [],
     prefixes: [],
@@ -115,7 +123,7 @@ export function parseListMultipart(xml) {
 }
 
 // parse XML response to list all the owned buckets
-export function parseListBucket(xml) {
+export function parseListBucket(xml: string) {
   var result = []
   var xmlobj = parseXml(xml)
 
@@ -137,7 +145,7 @@ export function parseListBucket(xml) {
 }
 
 // parse XML response for bucket notification
-export function parseBucketNotification(xml) {
+export function parseBucketNotification(xml: string) {
   var result = {
     TopicConfiguration: [],
     QueueConfiguration: [],
@@ -210,13 +218,13 @@ export function parseBucketNotification(xml) {
 }
 
 // parse XML response for bucket region
-export function parseBucketRegion(xml) {
+export function parseBucketRegion(xml: string) {
   // return region information
   return parseXml(xml).LocationConstraint
 }
 
 // parse XML response for list parts of an in progress multipart upload
-export function parseListParts(xml) {
+export function parseListParts(xml: string) {
   var xmlobj = parseXml(xml)
   var result = {
     isTruncated: false,
@@ -250,7 +258,7 @@ export function parseListParts(xml) {
 }
 
 // parse XML response when a new multipart upload is initiated
-export function parseInitiateMultipart(xml) {
+export function parseInitiateMultipart(xml: string) {
   var xmlobj = parseXml(xml)
 
   if (!xmlobj.InitiateMultipartUploadResult) {
@@ -265,7 +273,7 @@ export function parseInitiateMultipart(xml) {
 }
 
 // parse XML response when a multipart upload is completed
-export function parseCompleteMultipart(xml) {
+export function parseCompleteMultipart(xml: string) {
   var xmlobj = parseXml(xml).CompleteMultipartUploadResult
   if (xmlobj.Location) {
     var location = toArray(xmlobj.Location)[0]
@@ -311,7 +319,7 @@ const formatObjInfo = (content, opts = {}) => {
 }
 
 // parse XML response for list objects in a bucket
-export function parseListObjects(xml) {
+export function parseListObjects(xml: string) {
   var result = {
     objects: [],
     isTruncated: false,
@@ -384,7 +392,7 @@ export function parseListObjects(xml) {
 }
 
 // parse XML response for list objects v2 in a bucket
-export function parseListObjectsV2(xml) {
+export function parseListObjectsV2(xml: string) {
   var result = {
     objects: [],
     isTruncated: false,
@@ -418,7 +426,7 @@ export function parseListObjectsV2(xml) {
 }
 
 // parse XML response for list objects v2 with metadata in a bucket
-export function parseListObjectsV2WithMetadata(xml) {
+export function parseListObjectsV2WithMetadata(xml: string) {
   var result = {
     objects: [],
     isTruncated: false,
@@ -459,12 +467,12 @@ export function parseListObjectsV2WithMetadata(xml) {
   return result
 }
 
-export function parseBucketVersioningConfig(xml) {
+export function parseBucketVersioningConfig(xml: string) {
   var xmlObj = parseXml(xml)
   return xmlObj.VersioningConfiguration
 }
 
-export function parseTagging(xml) {
+export function parseTagging(xml: string) {
   const xmlObj = parseXml(xml)
   let result = []
   if (xmlObj.Tagging && xmlObj.Tagging.TagSet && xmlObj.Tagging.TagSet.Tag) {
@@ -479,12 +487,12 @@ export function parseTagging(xml) {
   return result
 }
 
-export function parseLifecycleConfig(xml) {
+export function parseLifecycleConfig(xml: string) {
   const xmlObj = parseXml(xml)
   return xmlObj.LifecycleConfiguration
 }
 
-export function parseObjectLockConfig(xml) {
+export function parseObjectLockConfig(xml: string) {
   const xmlObj = parseXml(xml)
   let lockConfigResult = {}
   if (xmlObj.ObjectLockConfiguration) {
@@ -514,7 +522,7 @@ export function parseObjectLockConfig(xml) {
   }
 }
 
-export function parseObjectRetentionConfig(xml) {
+export function parseObjectRetentionConfig(xml: string) {
   const xmlObj = parseXml(xml)
   const retentionConfig = xmlObj.Retention
 
@@ -524,11 +532,12 @@ export function parseObjectRetentionConfig(xml) {
   }
 }
 
-export function parseBucketEncryptionConfig(xml) {
+export function parseBucketEncryptionConfig(xml: string) {
   let encConfig = parseXml(xml)
   return encConfig
 }
-export function parseReplicationConfig(xml) {
+
+export function parseReplicationConfig(xml: string) {
   const xmlObj = parseXml(xml)
   const replicationConfig = {
     ReplicationConfiguration: {
@@ -539,18 +548,18 @@ export function parseReplicationConfig(xml) {
   return replicationConfig
 }
 
-export function parseObjectLegalHoldConfig(xml) {
+export function parseObjectLegalHoldConfig(xml: string) {
   const xmlObj = parseXml(xml)
   return xmlObj.LegalHold
 }
 
-export function uploadPartParser(xml) {
+export function uploadPartParser(xml: string) {
   const xmlObj = parseXml(xml)
   const respEl = xmlObj.CopyPartResult
   return respEl
 }
 
-export function removeObjectsParser(xml) {
+export function removeObjectsParser(xml: string) {
   const xmlObj = parseXml(xml)
   if (xmlObj.DeleteResult && xmlObj.DeleteResult.Error) {
     // return errors as array always. as the response is object in case of single object passed in removeObjects
@@ -656,35 +665,33 @@ export function parseSelectObjectContentResponse(res) {
             break
           }
 
-          case 'Progress':
-            {
-              switch (contentType) {
-                case 'text/xml': {
-                  const progressData = payloadStream.read(payLoadLength)
-                  selectResults.setProgress(progressData.toString())
-                  break
-                }
-                default: {
-                  const errorMessage = `Unexpected content-type ${contentType} sent for event-type Progress`
-                  throw new Error(errorMessage)
-                }
+          case 'Progress': {
+            switch (contentType) {
+              case 'text/xml': {
+                const progressData = payloadStream.read(payLoadLength)
+                selectResults.setProgress(progressData.toString())
+                break
+              }
+              default: {
+                const errorMessage = `Unexpected content-type ${contentType} sent for event-type Progress`
+                throw new Error(errorMessage)
               }
             }
+          }
             break
-          case 'Stats':
-            {
-              switch (contentType) {
-                case 'text/xml': {
-                  const statsData = payloadStream.read(payLoadLength)
-                  selectResults.setStats(statsData.toString())
-                  break
-                }
-                default: {
-                  const errorMessage = `Unexpected content-type ${contentType} sent for event-type Stats`
-                  throw new Error(errorMessage)
-                }
+          case 'Stats': {
+            switch (contentType) {
+              case 'text/xml': {
+                const statsData = payloadStream.read(payLoadLength)
+                selectResults.setStats(statsData.toString())
+                break
+              }
+              default: {
+                const errorMessage = `Unexpected content-type ${contentType} sent for event-type Stats`
+                throw new Error(errorMessage)
               }
             }
+          }
             break
           default: {
             // Continuation message: Not sure if it is supported. did not find a reference or any message in response.

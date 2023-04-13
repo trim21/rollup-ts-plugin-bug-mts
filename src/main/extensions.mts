@@ -20,11 +20,13 @@ import { isBoolean, isNumber, isString } from './asserts.mts'
 import * as errors from './errors.mts'
 import { isValidBucketName, isValidPrefix, pipesetup, uriEscape } from './helpers.mts'
 import * as transformers from './transformers.mjs'
+import { IClient } from './type.ts'
+
+// TODO
+type S3Object = unknown
 
 export default class extensions {
-  constructor(client) {
-    this.client = client
-  }
+  constructor(readonly client: IClient) {}
 
   // List the objects in the bucket using S3 ListObjects V2 With Metadata
   //
@@ -43,7 +45,7 @@ export default class extensions {
   //   * `obj.lastModified` _Date_: modified time stamp
   //   * `obj.metadata` _object_: metadata of the object
 
-  listObjectsV2WithMetadata(bucketName, prefix, recursive, startAfter) {
+  listObjectsV2WithMetadata(bucketName: string, prefix: string, recursive: boolean, startAfter: string) {
     if (prefix === undefined) {
       prefix = ''
     }
@@ -69,11 +71,11 @@ export default class extensions {
       throw new TypeError('startAfter should be of type "string"')
     }
     // if recursive is false set delimiter to '/'
-    var delimiter = recursive ? '' : '/'
-    var continuationToken = ''
-    var objects = []
-    var ended = false
-    var readStream = new stream.Readable({ objectMode: true })
+    let delimiter = recursive ? '' : '/'
+    let continuationToken = ''
+    let objects: S3Object[] = []
+    let ended = false
+    let readStream = new stream.Readable({ objectMode: true })
     readStream._read = () => {
       // push one object per _read()
       if (objects.length) {
@@ -93,6 +95,7 @@ export default class extensions {
             ended = true
           }
           objects = result.objects
+          // @ts-expect-error read more
           readStream._read()
         })
     }
@@ -110,7 +113,14 @@ export default class extensions {
   // * `max-keys` _number_: Sets the maximum number of keys returned in the response body.
   // * `start-after` _string_: Specifies the key to start after when listing objects in a bucket.
 
-  listObjectsV2WithMetadataQuery(bucketName, prefix, continuationToken, delimiter, maxKeys, startAfter) {
+  private listObjectsV2WithMetadataQuery(
+    bucketName: string,
+    prefix: string,
+    continuationToken: string,
+    delimiter: string,
+    maxKeys: number,
+    startAfter: string
+  ) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -129,7 +139,7 @@ export default class extensions {
     if (!isString(startAfter)) {
       throw new TypeError('startAfter should be of type "string"')
     }
-    var queries = []
+    let queries = []
 
     // Call for listing objects v2 API
     queries.push(`list-type=2`)
@@ -156,12 +166,12 @@ export default class extensions {
       queries.push(`max-keys=${maxKeys}`)
     }
     queries.sort()
-    var query = ''
+    let query = ''
     if (queries.length > 0) {
       query = `${queries.join('&')}`
     }
-    var method = 'GET'
-    var transformer = transformers.getListObjectsV2WithMetadataTransformer()
+    let method = 'GET'
+    let transformer = transformers.getListObjectsV2WithMetadataTransformer()
     this.client.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
       if (e) {
         return transformer.emit('error', e)

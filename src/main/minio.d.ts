@@ -605,15 +605,10 @@ export class Client {
   setRequestOptions(options: RequestOptions): void
 
   // Minio extensions that aren't necessary present for Amazon S3 compatible storage servers
-  extensions: {
-    listObjectsV2WithMetadata(
-      bucketName: string,
-      prefix?: string,
-      recursive?: boolean,
-      startAfter?: string
-    ): BucketStream<BucketItemWithMetadata>
-  }
+  extensions: extensions
 }
+
+import extensions from './extensions.mts'
 
 export namespace Policy {
   const NONE: 'none'

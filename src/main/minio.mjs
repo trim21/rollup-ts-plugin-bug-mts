@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import * as Stream from 'node:stream'
+
 import async from 'async'
 import BlockStream2 from 'block-stream2'
 import fs from 'fs'
@@ -23,7 +25,6 @@ import _ from 'lodash'
 import mkdirp from 'mkdirp'
 import path from 'path'
 import querystring from 'query-string'
-import Stream from 'stream'
 import { TextEncoder } from 'web-encoding'
 import Xml from 'xml'
 import xml2js from 'xml2js'
@@ -42,7 +43,7 @@ import {
 import { CopyConditions } from './copyConditions.mjs'
 import CredentialProvider from './CredentialProvider.mts'
 import * as errors from './errors.mts'
-import extensions from './extensions.mjs'
+import extensions from './extensions.mts'
 import {
   calculateEvenSplits,
   CopyDestinationOptions,

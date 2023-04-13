@@ -28,6 +28,7 @@ type ResponseCallback = (err: unknown, res: IncomingMessage) => void
 export type UploadID = string
 
 export interface IClient extends Client {
+  region: string
   enableSHA256: boolean
 
   makeRequest(

@@ -16,102 +16,27 @@
 
 import { EventEmitter } from 'events'
 
-import { pipesetup, uriEscape } from './helpers.mts'
-import { DEFAULT_REGION } from './s3-endpoints.mts'
-import * as transformers from './transformers.mjs'
+import { pipesetup, uriEscape } from '../helpers.mts'
+import { DEFAULT_REGION } from '../s3-endpoints.mts'
+import * as transformers from '../transformers.mts'
+import { IClient } from '../type.ts'
+import { NotificationEvent } from './events.mts'
 
-// Notification config - array of target configs.
-// Target configs can be
-// 1. Topic (simple notification service)
-// 2. Queue (simple queue service)
-// 3. CloudFront (lambda function)
-export class NotificationConfig {
-  add(target) {
-    let instance = ''
-    if (target instanceof TopicConfig) {
-      instance = 'TopicConfiguration'
-    }
-    if (target instanceof QueueConfig) {
-      instance = 'QueueConfiguration'
-    }
-    if (target instanceof CloudFunctionConfig) {
-      instance = 'CloudFunctionConfiguration'
-    }
-    if (!this[instance]) {
-      this[instance] = []
-    }
-    this[instance].push(target)
-  }
-}
-
-// Base class for three supported configs.
-class TargetConfig {
-  setId(id) {
-    this.Id = id
-  }
-  addEvent(newevent) {
-    if (!this.Event) {
-      this.Event = []
-    }
-    this.Event.push(newevent)
-  }
-  addFilterSuffix(suffix) {
-    if (!this.Filter) {
-      this.Filter = { S3Key: { FilterRule: [] } }
-    }
-    this.Filter.S3Key.FilterRule.push({ Name: 'suffix', Value: suffix })
-  }
-  addFilterPrefix(prefix) {
-    if (!this.Filter) {
-      this.Filter = { S3Key: { FilterRule: [] } }
-    }
-    this.Filter.S3Key.FilterRule.push({ Name: 'prefix', Value: prefix })
-  }
-}
-
-// 1. Topic (simple notification service)
-export class TopicConfig extends TargetConfig {
-  constructor(arn) {
-    super()
-    this.Topic = arn
-  }
-}
-
-// 2. Queue (simple queue service)
-export class QueueConfig extends TargetConfig {
-  constructor(arn) {
-    super()
-    this.Queue = arn
-  }
-}
-
-// 3. CloudFront (lambda function)
-export class CloudFunctionConfig extends TargetConfig {
-  constructor(arn) {
-    super()
-    this.CloudFunction = arn
-  }
-}
-
-export const buildARN = (partition, service, region, accountId, resource) => {
-  return 'arn:' + partition + ':' + service + ':' + region + ':' + accountId + ':' + resource
-}
-
-export const ObjectCreatedAll = 's3:ObjectCreated:*'
-export const ObjectCreatedPut = 's3:ObjectCreated:Put'
-export const ObjectCreatedPost = 's3:ObjectCreated:Post'
-export const ObjectCreatedCopy = 's3:ObjectCreated:Copy'
-export const ObjectCreatedCompleteMultipartUpload = 's3:ObjectCreated:CompleteMultipartUpload'
-export const ObjectRemovedAll = 's3:ObjectRemoved:*'
-export const ObjectRemovedDelete = 's3:ObjectRemoved:Delete'
-export const ObjectRemovedDeleteMarkerCreated = 's3:ObjectRemoved:DeleteMarkerCreated'
-export const ObjectReducedRedundancyLostObject = 's3:ReducedRedundancyLostObject'
+// TODO: type this
+type NotificationRecord = unknown
 
 // Poll for notifications, used in #listenBucketNotification.
 // Listening constitutes repeatedly requesting s3 whether or not any
 // changes have occurred.
 export class NotificationPoller extends EventEmitter {
-  constructor(client, bucketName, prefix, suffix, events) {
+  private client: IClient
+  private bucketName: string
+  private prefix: string
+  private suffix: string
+  private events: NotificationEvent[]
+  private ending: boolean
+
+  constructor(client: IClient, bucketName: string, prefix: string, suffix: string, events: NotificationEvent[]) {
     super()
 
     this.client = client
@@ -144,13 +69,13 @@ export class NotificationPoller extends EventEmitter {
     }
 
     let method = 'GET'
-    var queries = []
+    let queries = []
     if (this.prefix) {
-      var prefix = uriEscape(this.prefix)
+      let prefix = uriEscape(this.prefix)
       queries.push(`prefix=${prefix}`)
     }
     if (this.suffix) {
-      var suffix = uriEscape(this.suffix)
+      let suffix = uriEscape(this.suffix)
       queries.push(`suffix=${suffix}`)
     }
     if (this.events) {
@@ -158,7 +83,7 @@ export class NotificationPoller extends EventEmitter {
     }
     queries.sort()
 
-    var query = ''
+    let query = ''
     if (queries.length > 0) {
       query = `${queries.join('&')}`
     }
@@ -180,7 +105,7 @@ export class NotificationPoller extends EventEmitter {
           }
 
           // Iterate over the notifications and emit them individually.
-          records.forEach((record) => {
+          records.forEach((record: NotificationRecord) => {
             this.emit('notification', record)
           })
 

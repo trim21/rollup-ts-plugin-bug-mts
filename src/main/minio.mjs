@@ -74,7 +74,8 @@ import {
   uriEscape,
   uriResourceEscape,
 } from './helpers.mts'
-import { NotificationConfig, NotificationPoller } from './notification.mjs'
+import { NotificationPoller } from './notification/index.mts'
+import { NotificationConfig } from './notification/notificationConfig.mts'
 import ObjectUploader from './object-uploader.mts'
 import { PostPolicy } from './postPolicy.mjs'
 import { promisify } from './promisify.mjs'
@@ -85,7 +86,7 @@ import * as xmlParsers from './xml-parsers/index.mts'
 import { parseSelectObjectContentResponse } from './xml-parsers/parse-select-object-content-response.mts'
 
 export * from './helpers.mts'
-export * from './notification.mjs'
+export * from './notification/index.mts'
 export { DEFAULT_REGION }
 export { removeDirAndFiles } from '../test/utils.mjs'
 export * from './helpers.mts'
@@ -3883,3 +3884,18 @@ Client.prototype.getObjectLegalHold = promisify(Client.prototype.getObjectLegalH
 Client.prototype.composeObject = promisify(Client.prototype.composeObject)
 
 // Client.prototype.selectObjectContent = promisify(Client.prototype.selectObjectContent)
+export { buildARN } from './notification/buildARN.mts'
+export { CloudFunctionConfig } from './notification/cloudFunctionConfig.mts'
+export { ObjectReducedRedundancyLostObject } from './notification/events.mjs'
+export { ObjectRemovedDeleteMarkerCreated } from './notification/events.mjs'
+export { ObjectRemovedDelete } from './notification/events.mjs'
+export { ObjectRemovedAll } from './notification/events.mjs'
+export { ObjectCreatedCompleteMultipartUpload } from './notification/events.mjs'
+export { ObjectCreatedCopy } from './notification/events.mjs'
+export { ObjectCreatedPost } from './notification/events.mjs'
+export { ObjectCreatedPut } from './notification/events.mjs'
+export { ObjectCreatedAll } from './notification/events.mjs'
+export { NotificationConfig } from './notification/notificationConfig.mts'
+export { QueueConfig } from './notification/queueConfig.mts'
+export { TargetConfig } from './notification/targetConfig.mts'
+export { TopicConfig } from './notification/topicConfig.mts'

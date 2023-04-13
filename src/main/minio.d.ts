@@ -1,6 +1,5 @@
 // imported from https://github.com/DefinitelyTyped/DefinitelyTyped/blob/93cfb0ec069731dcdfc31464788613f7cddb8192/types/minio/index.d.ts
 
-import { EventEmitter } from 'events'
 import { RequestOptions } from 'https'
 import { Readable as ReadableStream } from 'stream'
 
@@ -10,24 +9,7 @@ import { Region } from './s3-endpoints.mts'
 
 // Exports only from typings
 export { Region }
-export type NotificationEvent =
-  | 's3:ObjectCreated:*'
-  | 's3:ObjectCreated:Put'
-  | 's3:ObjectCreated:Post'
-  | 's3:ObjectCreated:Copy'
-  | 's3:ObjectCreated:CompleteMultipartUpload'
-  | 's3:ObjectRemoved:*'
-  | 's3:ObjectRemoved:Delete'
-  | 's3:ObjectRemoved:DeleteMarkerCreated'
-  | 's3:ReducedRedundancyLostObject'
-  | 's3:TestEvent'
-  | 's3:ObjectRestore:Post'
-  | 's3:ObjectRestore:Completed'
-  | 's3:Replication:OperationFailedReplication'
-  | 's3:Replication:OperationMissedThreshold'
-  | 's3:Replication:OperationReplicatedAfterThreshold'
-  | 's3:Replication:OperationNotTracked'
-  | string
+
 export type Mode = 'COMPLIANCE' | 'GOVERNANCE'
 export type LockUnit = 'Days' | 'Years'
 export type LegalHoldStatus = 'ON' | 'OFF'
@@ -221,17 +203,6 @@ export interface SourceObjectStats {
   lastModicied: Date
   versionId: string
   etag: string
-}
-
-// No need to export this. But without it - linter error.
-export class TargetConfig {
-  setId(id: any): void
-
-  addEvent(newEvent: any): void
-
-  addFilterSuffix(suffix: any): void
-
-  addFilterPrefix(prefix: any): void
 }
 
 export interface MakeBucketOpt {
@@ -651,30 +622,27 @@ export namespace Policy {
   const READWRITE: 'readwrite'
 }
 
-export class NotificationPoller extends EventEmitter {
-  stop(): void
+import { NotificationPoller } from './notification/index.mts'
 
-  start(): void
+export { NotificationPoller }
 
-  // must to be public?
-  checkForChanges(): void
-}
+import { NotificationConfig } from './notification/notificationConfig.mts'
 
-export class NotificationConfig {
-  add(target: TopicConfig | QueueConfig | CloudFunctionConfig): void
-}
+export { NotificationConfig }
 
-export class TopicConfig extends TargetConfig {
-  constructor(arn: string)
-}
+import { TopicConfig } from './notification/topicConfig.mts'
 
-export class QueueConfig extends TargetConfig {
-  constructor(arn: string)
-}
+export { TopicConfig }
 
-export class CloudFunctionConfig extends TargetConfig {
-  constructor(arn: string)
-}
+import { QueueConfig } from './notification/queueConfig.mts'
+
+export { QueueConfig }
+
+import { CloudFunctionConfig } from './notification/cloudFunctionConfig.mts'
+import { NotificationEvent } from './notification/events.mts'
+
+export type { NotificationEvent }
+export { CloudFunctionConfig }
 
 export class CopySourceOptions {
   constructor(options: {

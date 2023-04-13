@@ -26,6 +26,7 @@ import ipaddr from 'ipaddr.js'
 import _ from 'lodash'
 import mime from 'mime-types'
 import querystring from 'query-string'
+import { Readable as ReadableStream } from 'stream'
 
 import * as errors from './errors.mts'
 

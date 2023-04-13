@@ -1,3 +1,5 @@
+import { Readable as ReadableStream } from 'stream'
+
 // check if typeof arg number
 export function isNumber(arg: unknown): arg is number {
   return typeof arg === 'number'

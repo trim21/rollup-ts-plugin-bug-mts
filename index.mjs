@@ -1,5 +1,5 @@
 import { name as canImportName1 } from "./src/can-import";
-import { name as canNotImportName1 } from "./src/can-not-import1.ts";
-import { name as canNotImportName2 } from "./src/can-not-import2.mts";
+import { name as canImportName2 } from "./src/can-import2.ts";
+import { name as canNotImportName } from "./src/can-not-import.mts";
 
-console.log(canImportName1, canNotImportName1, canNotImportName2)
+console.log(canImportName1, canImportName2, canNotImportName)

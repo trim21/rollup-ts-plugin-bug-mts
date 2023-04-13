@@ -16,8 +16,8 @@ module.exports = {
     }),
     externals({ builtinsPrefix: 'strip' }),
     typescript({
+      include: ['*.ts', '*.mts', '*.cts'],
       tsconfig: 'tsconfig.json',
-      outputToFilesystem: false,
     }),
     replace({
       'process.env.MINIO_JS_PACKAGE_VERSION': JSON.stringify(pkg.version),

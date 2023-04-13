@@ -1,4 +1,4 @@
-import { Readable as ReadableStream } from 'stream'
+import type { Readable as ReadableStream } from 'stream'
 
 // check if typeof arg number
 export function isNumber(arg: unknown): arg is number {
@@ -6,7 +6,7 @@ export function isNumber(arg: unknown): arg is number {
 }
 
 // check if typeof arg function
-export function isFunction(arg: unknown): arg is () => any {
+export function isFunction(arg: unknown): arg is (e: Error) => any {
   return typeof arg === 'function'
 }
 

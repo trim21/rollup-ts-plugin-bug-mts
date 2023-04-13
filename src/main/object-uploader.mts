@@ -16,10 +16,11 @@
 
 import Crypto from 'crypto'
 import * as querystring from 'query-string'
-import { Transform, TransformCallback } from 'stream'
+import type { TransformCallback } from 'stream'
+import { Transform } from 'stream'
 
 import { getVersionId, sanitizeETag } from './helpers.mts'
-import { IClient, UploadID } from './type.ts'
+import type { IClient, UploadID } from './type.ts'
 
 type Result = { etag: string; versionId: string | null }
 type Callback = (error?: unknown, result?: Result) => void

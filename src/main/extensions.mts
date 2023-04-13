@@ -19,14 +19,14 @@ import * as stream from 'node:stream'
 import { isBoolean, isNumber, isString } from './asserts.mts'
 import * as errors from './errors.mts'
 import { isValidBucketName, isValidPrefix, pipesetup, uriEscape } from './helpers.mts'
+import type { Client } from './minio.mjs'
 import * as transformers from './transformers.mjs'
-import { IClient } from './type.ts'
 
 // TODO
 type S3Object = unknown
 
 export default class extensions {
-  constructor(readonly client: IClient) {}
+  constructor(readonly client: Client) {}
 
   // List the objects in the bucket using S3 ListObjects V2 With Metadata
   //
@@ -172,12 +172,26 @@ export default class extensions {
     }
     let method = 'GET'
     let transformer = transformers.getListObjectsV2WithMetadataTransformer()
-    this.client.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
-      if (e) {
-        return transformer.emit('error', e)
+    this.client.makeRequest(
+      {
+        method,
+        bucketName,
+        query,
+      },
+      '',
+      [200],
+      '',
+      true,
+      (e, response) => {
+        if (e) {
+          return transformer.emit('error', e)
+        }
+        if (!response) {
+          throw new Error('BUG: callback missing response argument')
+        }
+        pipesetup(response, transformer)
       }
-      pipesetup(response, transformer)
-    })
+    )
     return transformer
   }
 }

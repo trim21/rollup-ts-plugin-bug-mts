@@ -1,12 +1,11 @@
-import Http from 'http'
-import Https from 'https'
-import { URL, URLSearchParams } from 'url'
+import Http from 'node:http'
+import Https from 'node:https'
+import { URL, URLSearchParams } from 'node:url'
 
 import CredentialProvider from './CredentialProvider.mts'
 import Credentials from './Credentials.mts'
 import { makeDateLong, parseXml, toSha256 } from './helpers.mts'
 import { signV4ByServiceName } from './signing.mts'
-import { IRequest } from './type.ts'
 
 type CredentialResponse = {
   ErrorResponse?: unknown
@@ -143,7 +142,7 @@ export default class AssumeRoleProvider extends CredentialProvider {
     /**
      * Nodejs's Request Configuration.
      */
-    const requestOptions: IRequest = {
+    const requestOptions = {
       hostname: hostValue,
       port: portValue,
       path: '/',
@@ -151,11 +150,11 @@ export default class AssumeRoleProvider extends CredentialProvider {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'content-length': urlParams.length,
+        'content-length': urlParams.length.toString(),
         host: hostValue,
         'x-amz-date': makeDateLong(date),
         'x-amz-content-sha256': contentSha256,
-      },
+      } as Record<string, string>,
     }
 
     const authorization = signV4ByServiceName(requestOptions, this.accessKey, this.secretKey, this.region, date, 'sts')

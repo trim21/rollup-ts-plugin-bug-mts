@@ -15,9 +15,9 @@
  */
 
 import * as Crypto from 'node:crypto'
-import * as stream from 'node:stream'
+import type * as stream from 'node:stream'
 
-import { ServerResponse } from 'http'
+import type { ServerResponse } from 'http'
 import Through2 from 'through2'
 
 import { isFunction } from './asserts.mts'
@@ -98,8 +98,7 @@ export function getErrorTransformer(response: ServerResponse) {
   }
 
   let headerInfo: Record<string, string | undefined | null> = {}
-  // A value created by S3 compatible server that uniquely identifies
-  // the request.
+  // A value created by S3 compatible server that uniquely identifies the request.
   headerInfo.amzRequestid = response.headersSent ? (response.getHeader('x-amz-request-id') as string | undefined) : null
   // A special token that helps troubleshoot API replies and issues.
   headerInfo.amzId2 = response.headersSent ? (response.getHeader('x-amz-id-2') as string | undefined) : null

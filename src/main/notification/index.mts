@@ -19,8 +19,8 @@ import { EventEmitter } from 'events'
 import { pipesetup, uriEscape } from '../helpers.mts'
 import { DEFAULT_REGION } from '../s3-endpoints.mts'
 import * as transformers from '../transformers.mts'
-import { IClient } from '../type.ts'
-import { NotificationEvent } from './events.mts'
+import type { IClient } from '../type.ts'
+import type { NotificationEvent } from './events.mts'
 
 // TODO: type this
 type NotificationRecord = unknown

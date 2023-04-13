@@ -12,7 +12,7 @@ module.exports = {
     'prettier', // This should be the last entry.
   ],
   parser: '@typescript-eslint/parser',
-  plugins: ['@typescript-eslint', 'simple-import-sort'],
+  plugins: ['@typescript-eslint', 'simple-import-sort', 'unused-imports'],
   parserOptions: {
     sourceType: 'module',
     ecmaVersion: 8,
@@ -54,6 +54,17 @@ module.exports = {
         },
       },
     ],
+
+    'unused-imports/no-unused-imports': 'error',
+
+    '@typescript-eslint/consistent-type-imports': [
+      'error',
+      {
+        prefer: 'type-imports',
+        fixStyle: 'separate-type-imports',
+      },
+    ],
+
     '@typescript-eslint/no-explicit-any': ['warn'],
 
     '@typescript-eslint/prefer-optional-chain': 0, // ["warn"],

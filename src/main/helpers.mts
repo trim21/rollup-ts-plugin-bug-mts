@@ -21,14 +21,15 @@ import * as stream from 'node:stream'
 
 import { isBrowser } from 'browser-or-node'
 import { XMLParser } from 'fast-xml-parser'
-import { IncomingHttpHeaders } from 'http'
+import type { IncomingHttpHeaders } from 'http'
 import ipaddr from 'ipaddr.js'
 import _ from 'lodash'
 import mime from 'mime-types'
 import querystring from 'query-string'
-import { Readable as ReadableStream } from 'stream'
+import type { Readable as ReadableStream } from 'stream'
 
 import * as errors from './errors.mts'
+import type { Binary } from './type.ts'
 
 export type MetaData = Record<string, string>
 export type Header = Record<string, string | null | undefined>
@@ -400,20 +401,20 @@ export const LEGAL_HOLD_STATUS = {
   DISABLED: 'OFF',
 } as const
 
-const objectToBuffer = (payload: Crypto.BinaryLike): Buffer => {
+const objectToBuffer = (payload: Binary): Buffer => {
   // don't know how to write this...
   return Buffer.from(payload as Buffer)
 }
 
-export const toMd5 = (payload: Crypto.BinaryLike): string => {
-  let payLoadBuf: string | Buffer = objectToBuffer(payload)
+export const toMd5 = (payload: Binary): string => {
+  let payLoadBuf: Binary = objectToBuffer(payload)
   // use string from browser and buffer from nodejs
   // browser support is tested only against minio server
   payLoadBuf = isBrowser ? payLoadBuf.toString() : payLoadBuf
   return Crypto.createHash('md5').update(payLoadBuf).digest().toString('base64')
 }
 
-export const toSha256 = (payload: Crypto.BinaryLike) => {
+export const toSha256 = (payload: Binary) => {
   return Crypto.createHash('sha256').update(payload).digest('hex')
 }
 

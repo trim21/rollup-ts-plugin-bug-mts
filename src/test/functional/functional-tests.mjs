@@ -33,7 +33,7 @@ import { isArray } from '../../main/asserts'
 import AssumeRoleProvider from '../../main/AssumeRoleProvider'
 import { CopyDestinationOptions, CopySourceOptions } from '../../main/helpers'
 import { getVersionId } from '../../main/helpers'
-import * as minio from '../../main/minio'
+import * as minio from '../../main/minio.mjs'
 import { DEFAULT_REGION } from '../../main/s3-endpoints'
 import { removeDirAndFiles } from '../utils'
 

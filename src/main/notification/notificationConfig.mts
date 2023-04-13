@@ -5,7 +5,7 @@
 // 3. CloudFront (lambda function)
 import { CloudFunctionConfig } from './cloudFunctionConfig.mts'
 import { QueueConfig } from './queueConfig.mts'
-import { TargetConfig } from './targetConfig.mts'
+import type { TargetConfig } from './targetConfig.mts'
 import { TopicConfig } from './topicConfig.mts'
 
 export class NotificationConfig {

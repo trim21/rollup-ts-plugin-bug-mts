@@ -1,7 +1,7 @@
 // imported from https://github.com/DefinitelyTyped/DefinitelyTyped/blob/93cfb0ec069731dcdfc31464788613f7cddb8192/types/minio/index.d.ts
 
-import { RequestOptions } from 'https'
-import { Readable as ReadableStream } from 'stream'
+import type { RequestOptions } from 'https'
+import type { Readable as ReadableStream } from 'stream'
 
 import { CopyConditions } from './copyConditions.mts'
 import { PostPolicy } from './postPolicy.mts'
@@ -608,7 +608,7 @@ export class Client {
   extensions: extensions
 }
 
-import extensions from './extensions.mts'
+import type extensions from './extensions.mts'
 
 export namespace Policy {
   const NONE: 'none'
@@ -634,7 +634,7 @@ import { QueueConfig } from './notification/queueConfig.mts'
 export { QueueConfig }
 
 import { CloudFunctionConfig } from './notification/cloudFunctionConfig.mts'
-import { NotificationEvent } from './notification/events.mts'
+import type { NotificationEvent } from './notification/events.mts'
 
 export type { NotificationEvent }
 export { CloudFunctionConfig }

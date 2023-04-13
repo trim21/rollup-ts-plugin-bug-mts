@@ -1,7 +1,8 @@
 // Build PostPolicy object that can be signed by presignedPostPolicy
 import { isObject } from './asserts.mjs'
 import * as errors from './errors.mjs'
-import { isValidBucketName, isValidObjectName, isValidPrefix, MetaData } from './helpers.mjs'
+import type { MetaData } from './helpers.mjs'
+import { isValidBucketName, isValidObjectName, isValidPrefix } from './helpers.mjs'
 
 export class PostPolicy {
   private policy: { conditions: (string | number)[][]; expiration?: string }

@@ -1,5 +1,4 @@
 import Credentials from './Credentials.mts'
-import { ICredentials } from './type.ts'
 
 export default class CredentialProvider {
   private credentials: Credentials
@@ -20,7 +19,7 @@ export default class CredentialProvider {
     })
   }
 
-  async getCredentials(): Promise<ICredentials | null> {
+  async getCredentials(): Promise<Credentials | null> {
     return this.credentials.get()
   }
 

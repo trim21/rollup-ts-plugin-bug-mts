@@ -1,15 +1,15 @@
-import { BinaryLike } from 'crypto'
-import { IncomingMessage } from 'http'
+import type { BinaryLike } from 'crypto'
+import type { IncomingMessage } from 'http'
 
 import type { Client } from './minio.d.ts'
 import type { ResultCallback } from './minio.d.ts'
 
-export type RequestHeader = Record<string, string | number>
+export type Binary = string | Buffer
+export type RequestHeader = Record<string, string>
 
 export interface IRequest {
   protocol: string
-  hostname: string
-  port: string
+  port?: number | string
   method: string
   path: string
   headers: RequestHeader
@@ -18,8 +18,8 @@ export interface IRequest {
 export type ICanonicalRequest = string
 
 export interface ICredentials {
-  accessKey?: string
-  secretKey?: string
+  accessKey: string
+  secretKey: string
   sessionToken?: string
 }
 

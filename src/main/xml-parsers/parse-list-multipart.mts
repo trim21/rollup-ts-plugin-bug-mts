@@ -1,7 +1,7 @@
 // parse XML response for listing in-progress multipart uploads
 import * as errors from '../errors.mts'
 import { parseXml, sanitizeObjectKey, toArray } from '../helpers.mts'
-import { UploadID } from '../type.ts'
+import type { UploadID } from '../type.ts'
 
 export function parseListMultipart(xml: string) {
   let result = {

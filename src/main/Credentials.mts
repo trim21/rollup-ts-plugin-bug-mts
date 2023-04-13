@@ -1,5 +1,3 @@
-import { ICredentials } from './type.ts'
-
 export default class Credentials {
   public accessKey?: string
   public secretKey?: string
@@ -43,11 +41,7 @@ export default class Credentials {
     return this.sessionToken
   }
 
-  get(): ICredentials {
-    return {
-      accessKey: this.accessKey,
-      secretKey: this.secretKey,
-      sessionToken: this.sessionToken,
-    }
+  get(): Credentials {
+    return this
   }
 }
